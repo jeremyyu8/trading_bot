@@ -1,3 +1,16 @@
+
+'''''
+
+todo:
+finish all unfinished functions in historic.py, maybe leave live stuff for later?
+
+use Risk = (Stop-Loss Price - Entry Price) * Position Size in strategies
+implement stop-loss for risk mitigation 
+
+
+'''
+
+
 import requests
 import pandas as pd
 
@@ -16,8 +29,12 @@ def make_okx_api_call(endpoint, params=None):
     except ValueError as e:
         raise ValueError('API error: {}'.format(e))
 
+
 tickers = pd.DataFrame(make_okx_api_call('/api/v5/market/tickers', {'instType': 'SPOT'})['data'])
 tickers = tickers.drop('instType', axis=1)
 print(tickers)
+
+
+
 
 
