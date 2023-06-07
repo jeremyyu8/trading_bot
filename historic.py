@@ -46,6 +46,57 @@ def get_historical(instId, after='', before='', bar='', limit=''):
     return historical
 
 
+def get_historical_period(instId, after='', before='', bar='', limit=''):
+    '''
+    Uses multiple api calls to get historical data over longer period of time
+
+    instId = 'BTC-USD'
+    dt = datetime(2023, 6, 1, 12, 1, 12) #year, month, day, minute, hour, second
+    dt2 = datetime(2023, 6, 2, 12, 1, 12)
+    historical = get_historical_period(instId, after=timestamp(
+    dt), before=timestamp(dt2), bar='1m', limit=100)
+
+    '''
+    # api call is so fucking scuffed, after parameter gets data before that value
+    # print(after)
+    # print(before)
+    after += 6000000
+    params = {'instId': instId, 'after': str(
+        after), 'before': '', 'bar': bar, 'limit': str(limit)}
+    request = make_okx_api_call(
+        '/api/v5/market/history-index-candles', params=params)
+    new_data = pd.DataFrame(request['data'])
+    historical = new_data
+
+    # 6000000ms is the time between each 100 data points
+    after += 6000000
+
+    # keep getting data until 'before' time is reached
+    while after < before:
+        params = {'instId': instId, 'after': str(
+            after), 'before': '', 'bar': bar, 'limit': str(limit)}
+        request = make_okx_api_call(
+            '/api/v5/market/history-index-candles', params=params)
+        new_data = pd.DataFrame(request['data'])
+        after += 6000000
+        historical = pd.concat([historical, new_data], ignore_index=True)
+
+    historical.columns = ["Date", "Open", "High", "Low", "Close", "State"]
+    historical = historical.drop('State', axis=1)
+    historical['Date'] = pd.to_datetime(historical['Date'], unit='ms')
+
+    # cast to floats lol
+    historical['Open'] = historical['Open'].astype(float)
+    historical['High'] = historical['High'].astype(float)
+    historical['Low'] = historical['Low'].astype(float)
+    historical['Close'] = historical['Close'].astype(float)
+
+    historical.set_index('Date', inplace=True)
+    historical.sort_values(by='Date')
+
+    return historical
+
+
 def visualize_historical(data):
     mpf.plot(data, type='candle', title='Candlestick Chart')
 
@@ -152,8 +203,16 @@ def simulate_strategy_historical(symbol, strategy, initial_balance, start_date, 
     spot_prices = get_historical(
         symbol, start_date, bar='1m', limit=100)  # fix
 
-    signals = rsi_strategy(spot_prices, period=14,
-                           buy_thresh=30, sell_thresh=70)
+    match strategy:
+        case 'sma':
+            signals = moving_average_strategy_candles(
+                spot_prices, window_size=20)
+        case 'rsi':
+            signals = rsi_strategy(spot_prices, period=14,
+                                   buy_thresh=30, sell_thresh=70)
+        case _:
+            print("Invalid Strategy")
+            return
 
     assert len(signals) == len(spot_prices)
 
@@ -180,8 +239,11 @@ def simulate_strategy_historical(symbol, strategy, initial_balance, start_date, 
 
 
 # Example usage
+
 instId = 'BTC-USD'
 dt = datetime(2023, 6, 1, 12, 1, 12)  # year, month, day, minute, hour, second
+dt2 = datetime(2023, 6, 2, 12, 1, 12)
+"""
 data = get_historical(instId, after=timestamp(dt), bar='1m', limit=100)
 # visualize_historical(data)
 print(data)
@@ -193,5 +255,10 @@ signals = rsi_strategy(data, period=14, buy_thresh=30, sell_thresh=70)
 print("Trading Signals:", signals)
 
 pnl = simulate_strategy_historical(
-    symbol='BTC-USD', strategy='', initial_balance=100000, start_date=timestamp(datetime(2023, 6, 1, 8, 1, 12)), end_date='')
+    symbol='BTC-USD', strategy='sma', initial_balance=100000, start_date=timestamp(datetime(2023, 6, 1, 8, 1, 12)), end_date='')
 print(pnl)
+"""
+
+historical = get_historical_period(instId, after=timestamp(
+    dt), before=timestamp(dt2), bar='1m', limit=100)
+print(historical)
