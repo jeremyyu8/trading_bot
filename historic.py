@@ -8,6 +8,8 @@ from datetime import datetime
 
 from main import make_okx_api_call
 
+# api limit is 20 requests/2 seconds
+
 ################# HELPER FUNCS ########################
 
 
@@ -146,20 +148,29 @@ def simulate_strategy_historical(symbol, strategy, initial_balance, start_date, 
     '''
     pnl = []
     balance = initial_balance
-    spot_prices = get_historical(symbol, start_date, end_date)  # fix
+    shares = 0
+    spot_prices = get_historical(
+        symbol, start_date, bar='1m', limit=100)  # fix
 
-    signals = strategy(spot_prices)
+    signals = rsi_strategy(spot_prices, period=14,
+                           buy_thresh=30, sell_thresh=70)
 
     assert len(signals) == len(spot_prices)
 
     for i in range(len(signals)):
-
+        curr_price = int(spot_prices['Close'][i])
         if signals[i] == 1:
-            balance -= spot_prices[i]
+            # buy
+            if (balance // curr_price) == 0:
+                continue
+            shares += balance // curr_price
+            balance -= shares * curr_price
         elif signals[i] == -1:
-            balance += spot_prices[i]
+            # sell
+            balance += shares * curr_price
+            shares = 0
 
-        pnl.append(balance)
+        pnl.append(balance+shares*curr_price)
 
         if balance <= 0:
             print('Bankrupt!')
@@ -173,9 +184,14 @@ instId = 'BTC-USD'
 dt = datetime(2023, 6, 1, 12, 1, 12)  # year, month, day, minute, hour, second
 data = get_historical(instId, after=timestamp(dt), bar='1m', limit=100)
 # visualize_historical(data)
+print(data)
 
 signals = moving_average_strategy_candles(data, window_size=5)
 print("Trading Signals:", signals)
 
 signals = rsi_strategy(data, period=14, buy_thresh=30, sell_thresh=70)
 print("Trading Signals:", signals)
+
+pnl = simulate_strategy_historical(
+    symbol='BTC-USD', strategy='', initial_balance=100000, start_date=timestamp(datetime(2023, 6, 1, 8, 1, 12)), end_date='')
+print(pnl)
