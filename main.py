@@ -32,7 +32,7 @@ def make_okx_api_call(endpoint, params=None):
 
 tickers = pd.DataFrame(make_okx_api_call('/api/v5/market/tickers', {'instType': 'SPOT'})['data'])
 tickers = tickers.drop('instType', axis=1)
-print(tickers)
+# print(tickers)
 
 
 

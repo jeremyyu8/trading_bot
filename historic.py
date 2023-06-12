@@ -108,6 +108,8 @@ def timestamp(dt):
 ########################################################################################
 
 
+
+
 def moving_average_strategy_candles(data, window_size):
     """
     Implements a simple moving average strategy using candlestick data.
