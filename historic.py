@@ -5,6 +5,7 @@ import matplotlib.dates as mdates
 import mplfinance as mpf
 import numpy as np
 from datetime import datetime
+import tensorflow as tf
 
 from main import make_okx_api_call
 
@@ -232,6 +233,11 @@ def macd_strategy(data, short=12, long=26, signal_span=9):
     return signals
 
 
+def neural_network():
+
+    return signals
+
+
 def simulate_strategy_historical(spot_prices, strategy, initial_balance):
     '''
     Not done
@@ -292,6 +298,7 @@ def simulate_strategy_historical(spot_prices, strategy, initial_balance):
     return pnl
 
 
+"""
 # Example usage
 instId = 'BTC-USD'
 dt = datetime(2023, 6, 3, 12, 1, 12)  # year, month, day, minute, hour, second
@@ -301,6 +308,7 @@ data = get_historical(instId, after=timestamp(dt), bar='1m', limit=100)
 # visualize_historical(data)
 data = data.sort_index()
 # print(data)
+"""
 
 """
 signals = sma_strategy(data, window_size=5)
@@ -309,8 +317,9 @@ signals = rsi_strategy(data, period=14, buy_thresh=30, sell_thresh=70)
 print("Trading Signals:", signals)
 """
 
+instId = 'BTC-USD'
 dt = datetime(2023, 5, 1, 0, 0, 0)  # year, month, day, minute, hour, second
-dt2 = datetime(2023, 5, 8, 0, 0, 0)
+dt2 = datetime(2023, 5, 3, 0, 0, 0)
 data = get_historical_period(instId, after=timestamp(
     dt), before=timestamp(dt2), bar='1m', limit=100)
 data = data.sort_index()
