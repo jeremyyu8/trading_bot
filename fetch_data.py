@@ -11,6 +11,7 @@ from main import make_okx_api_call
 
 from historic import get_historical_period, timestamp
 
+# collect data from a certain period and write to csv file
 instId = 'BTC-USD'
 dt = datetime(2023, 1, 1, 0, 0, 0)  # year, month, day, minute, hour, second
 dt2 = datetime(2023, 6, 1, 0, 0, 0)

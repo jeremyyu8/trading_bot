@@ -4,7 +4,10 @@ Trading bot that collects market data and automates various algorithms on the OK
 
 Strategies implemented:
 
-- poopy
+- SMA
+- EMA
+- RSI
+- MACD
 
 Functionalities:
 
