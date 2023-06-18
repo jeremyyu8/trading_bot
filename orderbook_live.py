@@ -7,20 +7,48 @@ import json
 import time
 
 
+# only for one symbol right now, one strategy
+class StrategySimulator:
+    def __init__(self, symbol, balance) -> None:
+        self.symbol = symbol 
+        self.balance = balance 
+    
+    def execute_narrow_spread(self):
+        def narrow_spread_strategy(full_load, incremental_load, threshold):
+            '''
+            If new ask comes in within threshold (small, <= 3 ticks) of best bid, instantly fill;
+            Similarly, if new bid comes in within threshold of best ask, instantly fill
+            '''
+
+            if incremental_load['asks'][0] - full_load['bids'][0] <= threshold:
+                # fill the ask by buying
+                pass 
+            
+            if full_load['asks'][0] - incremental_load['bids'][0] <= threshold:
+                # fill the bid by selling 
+                pass
+        
+        order_book = OrderBook(symbol = self.symbol, strategy = narrow_spread_strategy)
+        order_book.connect()
+
 
 class OrderBook:
-    def __init__(self, trading_pair):
-        self.trading_pair = trading_pair
+    def __init__(self, symbol, strategy):
+        self.symbol = symbol
         self.ws = None
         self.order_book = None
         self.most_recent_time = None 
         self.is_running = False
+        self.strategy = strategy
 
     def on_message(self, ws, message):
         # Parse the message as JSON
         data = json.loads(message)
         # print("message received")
-        self.process_order_book(data)
+        action, full_book, incremental_book = self.process_order_book(data)
+
+        if action == "update":
+            self.strategy(full_book, incremental_book)
 
     def on_error(self, ws, error):
         print("error:", error)
@@ -33,7 +61,7 @@ class OrderBook:
         subscribe_message = {
             "op": "subscribe",
             "args": [{"channel": "books",
-                      "instId": "BTC-USDT"
+                      "instId": self.symbol
                       }]
         }
         ws.send(json.dumps(subscribe_message))
@@ -69,8 +97,10 @@ class OrderBook:
         elif data['action'] == "update":
             self.order_book = merge_incremental_data(self.order_book, new_book)
         
-        print()
-        print(self.order_book)
+        # print()
+        # print(self.order_book)
+
+        return data['action'], self.order_book, new_book
 
     def get_bids(self):
         return self.order_book["bids"]
@@ -100,6 +130,8 @@ class OrderBook:
 
         plt.tight_layout()
         plt.show()
+
+
 
 def merge_incremental_data(full_load, incremental_load):
     '''
@@ -154,6 +186,8 @@ def merge_incremental_data(full_load, incremental_load):
         j += 1
 
     return {"bids": bids_final, "asks": asks_final}
+
+
 
 # Create an instance of the OrderBook class and connect
 order_book = OrderBook("BTC-USDT")
