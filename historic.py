@@ -291,9 +291,9 @@ back_tester = BackTester('BTC-USD')
 # x = threading.Thread(target=back_tester.fetch_data_api,
 #                      args=(timestamp(dt), timestamp(dt2), '1m', 100,))
 # x.start()
-# back_tester.fetch_data_api(after=timestamp(
-#     dt), before=timestamp(dt2), bar='1m', limit=100)
-back_tester.fetch_data_csv()
+back_tester.fetch_data_api(after=timestamp(
+    dt), before=timestamp(dt2), bar='1m', limit=100)
+# back_tester.fetch_data_csv()
 back_tester.macd_strategy()
 back_tester.rsi_strategy()
 back_tester.combine_signals()
