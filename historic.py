@@ -6,6 +6,7 @@ import mplfinance as mpf
 import numpy as np
 from datetime import datetime
 import tensorflow as tf
+import threading
 
 from main import make_okx_api_call
 
@@ -74,6 +75,7 @@ class BackTester:
         historical = historical.sort_index()
 
         self.data = historical
+        print("Completed API data fetch")
 
     def visualize_historical(self):
         mpf.plot(self.data, type='candle', title='Candlestick Chart')
@@ -285,8 +287,12 @@ dt = datetime(2023, 5, 1, 0, 0, 0)  # year, month, day, minute, hour, second
 dt2 = datetime(2023, 5, 2, 0, 0, 0)
 
 back_tester = BackTester('BTC-USD')
+
+# x = threading.Thread(target=back_tester.fetch_data_api,
+#                      args=(timestamp(dt), timestamp(dt2), '1m', 100,))
+# x.start()
 # back_tester.fetch_data_api(after=timestamp(
-# dt), before=timestamp(dt2), bar='1m', limit=100)
+#     dt), before=timestamp(dt2), bar='1m', limit=100)
 back_tester.fetch_data_csv()
 back_tester.macd_strategy()
 back_tester.rsi_strategy()

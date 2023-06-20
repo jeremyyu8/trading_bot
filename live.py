@@ -3,32 +3,51 @@ import pandas as pd
 
 from main import make_okx_api_call
 
-##################### HELPER FUNCTIONS FOR LIVE DATA #######################################
 
-def get_spot_price(symbol):
-    '''
-    Get the spot price for a given symbol, returns the price as a float
-    '''    
+class LiveTrader:
+    def __init__(self, symbol):
+        self.symbol = symbol
+        self.data = None
+        self.price = None
+        self.shares = 0
 
-    params = {'instId': symbol}
-    response = make_okx_api_call('/api/v5/market/ticker', params)
-    #print(response)
-    spot_price = float(response['data'][0]['last'])
-    return spot_price
+    ########################################## FETCH DATA ##########################################
 
-###############################################################################################
+    def get_spot_price(self):
+        '''
+        Get the spot price for a given symbol, returns the price as a float
+        '''
 
-def basic_moving_average_strategy(symbol, threshold = 0.05):
-    '''
-    Returns "Buy", "Sell", or "None"
-    '''
+        params = {'instId': self.symbol}
+        response = make_okx_api_call('/api/v5/market/ticker', params)
+        spot_price = float(response['data'][0]['last'])
+        self.price = spot_price
+        print(self.price)
 
-    spot_price = get_spot_price(symbol)
-    pass
+    ########################################## STRATEGIES ##########################################
+
+    def basic_moving_average_strategy(symbol, threshold=0.05):
+        '''
+        Returns "Buy", "Sell", or "None"
+        '''
+        pass
+
+    def position_sizing(self):
+        pass
+
+    def stop_loss(self):
+        pass
+
+    def buy(self):
+        pass
+
+    def sell(self):
+        pass
+
+    def simulate_strategy_live(symbol, strategy, initial_balance, freq):
+        pass
 
 
-
-def simulate_strategy_live(symbol, strategy, initial_balance, freq):
-    pass
-
-print(get_spot_price('MDT-USDT'))
+live_trader = LiveTrader('BTC-USDT')
+for i in range(30):
+    live_trader.get_spot_price()
