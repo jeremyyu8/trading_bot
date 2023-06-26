@@ -2,7 +2,7 @@ import json
 import websocket
 import typing
 
-OKXSymbolHandler = typing.NewType("OKXSymbolHandler", None)
+BaseSymbolHandler = typing.TypeVar('BaseSymbolHandler')
 
 
 class IDataHandler():
@@ -16,13 +16,15 @@ class IDataHandler():
         raise NotImplementedError
 
 class WSHandler(IDataHandler):
-    def __init__(self, symbol: str, symbol_handler: OKXSymbolHandler) -> None:
+    def __init__(self, url: str, subscription_args: list[dict], symbol: str, symbol_handler: BaseSymbolHandler) -> None:
         super().__init__()
         self.symbol = symbol
         self.symbol_handler = symbol_handler
+        self.url = url
+        self.subscription_args = subscription_args
     
     def on_message(self, ws, message):
-        self.symbol_handler.parse_message(message, "live")
+        self.symbol_handler.parse_message(json.loads(message), "live")
 
     def on_error(self, ws, error):
         print("error:", error)
@@ -33,14 +35,12 @@ class WSHandler(IDataHandler):
     def on_open(self, ws):
         subscribe_message = {
             "op": "subscribe",
-            "args": [{"channel": "tickers",
-                      "instId": self.symbol
-                      }]
+            "args": self.subscription_args
         }
         ws.send(json.dumps(subscribe_message))
 
     def start(self):
-        self.ws = websocket.WebSocketApp("wss://ws.okx.com:8443/ws/v5/public",
+        self.ws = websocket.WebSocketApp( url = self.url,
                                           on_message=self.on_message,
                                           on_error=self.on_error,
                                           on_close=self.on_close)

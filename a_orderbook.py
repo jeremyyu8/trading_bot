@@ -6,11 +6,11 @@ class IOrderbook():
 
     def on_order_add(self):
         raise NotImplementedError
+    
+    def on_trade(self):
+        raise NotImplementedError 
 
     # def onOrderRemove(self):
-    #     raise NotImplementedError 
-
-    # def onTrade(self):
     #     raise NotImplementedError 
 
     # def onTradeCancel(self):
@@ -23,8 +23,12 @@ class PriceLevelBook(IOrderbook):
         super().__init__()
         self.book_listeners = []
 
-    def orderbook_add(self, message, type):
+    def on_order_add(self, message):
         pass 
+
+    def on_trade(self, message):
+        for book_listener in self.book_listeners:
+            book_listener.on_trade_add(message)
 
     def add_book_listener(self, strategy):
         if not isinstance(strategy, IStrategy):

@@ -19,9 +19,8 @@ class BaseSymbolHandler(ISymbolHandler):
     def __init__(self, symbol, type) -> None:
         super().__init__()
         self.orderbook = PriceLevelBook() 
-        self.data_handler = WSHandler(symbol, self) if type == "live" else HistHandler(symbol)
 
-        if not isinstance(self.orderbook, IOrderbook) or not isinstance(self.data_handler, IDataHandler):
+        if not isinstance(self.orderbook, IOrderbook):
             raise ValueError
     
     def parse_message(self):
@@ -35,10 +34,40 @@ class BaseSymbolHandler(ISymbolHandler):
 
 
 class OKXSymbolHandler(BaseSymbolHandler):
+    def __init__(self, symbol, type) -> None:
+        super().__init__(symbol, type)
+
+        if type == "live":
+            self.data_handler = WSHandler(
+            url="wss://ws.okx.com:8443/ws/v5/public", 
+            subscription_args=[{"channel": "tickers", "instId": symbol}], 
+            symbol=symbol, 
+            symbol_handler=self)
+        else:
+            self.data_handler = HistHandler(symbol)
+
+        if not isinstance(self.data_handler, IDataHandler):
+            raise ValueError
+
     def parse_message(self, message, type):
-        print(message)
-        self.orderbook.orderbook_add(message, type)
+        print("new message", message["data"])
+        print()
+
+        if type == "live":
+            self.orderbook.on_trade({"last": message["data"][0]["last"], 
+                                 "lastSz":message["data"][0]["lastSz"],
+                                 "ts": message["data"][0]["ts"]}) 
+            
+            self.orderbook.on_order_add("hi")
+        else:
+            pass
         
 
     def start(self):
         self.data_handler.start()
+
+'''
+h":"30827","high24h":"30886.6","low24h":"29962","sodUtc0":"30467.6","sodUtc8":"30588.2","volCcy24h":"226848774.714833958","vol24h":"7455.88473797","ts":"1687762124712"}]}
+{"arg":{"channel":"tickers","instId":"BTC-USDT"},"data":[{"instType":"SPOT","instId":"BTC-USDT","last":"30301.5","lastSz":"0.0013","askPx":"30300.3","askSz":"2.68385152","bidPx":"30300.2","bidSz":"0.67476737","open24h":"30827","high24h":"30886.6","low24h":"29962","sodUtc0":"30467.6","sodUtc8":"30588.2","volCcy24h":"226848774.714833958","vol24h":"7455.88473797","ts":"1687762124866"}]}
+{"arg":{"channel":"tickers","instId":"BTC-USDT
+'''
