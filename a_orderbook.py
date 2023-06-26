@@ -23,7 +23,7 @@ class PriceLevelBook(IOrderbook):
         super().__init__()
         self.book_listeners = []
 
-    def on_order_add(self):
+    def orderbook_add(self, message, type):
         pass 
 
     def add_book_listener(self, strategy):
