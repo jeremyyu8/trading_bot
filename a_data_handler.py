@@ -1,9 +1,8 @@
 import json 
 import websocket
-from typing import NewType
+import typing
 
-from a_symbol_handler import BaseSymbolHandler, OKXSymbolHandler
-
+OKXSymbolHandler = typing.NewType("OKXSymbolHandler", None)
 
 
 class IDataHandler():
@@ -34,7 +33,7 @@ class WSHandler(IDataHandler):
     def on_open(self, ws):
         subscribe_message = {
             "op": "subscribe",
-            "args": [{"channel": "books",
+            "args": [{"channel": "tickers",
                       "instId": self.symbol
                       }]
         }
@@ -47,6 +46,7 @@ class WSHandler(IDataHandler):
                                           on_close=self.on_close)
         self.ws.on_open = self.on_open
 
+        #x = threading.Thread(target=symbol_handler.start(), daemon = True)
         self.ws.run_forever()
 
     

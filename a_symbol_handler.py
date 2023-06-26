@@ -18,8 +18,8 @@ class ISymbolHandler():
 class BaseSymbolHandler(ISymbolHandler):
     def __init__(self, symbol, type) -> None:
         super().__init__()
-        self.orderbook = PriceLevelBook(symbol) 
-        self.data_handler = WSHandler(symbol) if type == "live" else HistHandler(symbol)
+        self.orderbook = PriceLevelBook() 
+        self.data_handler = WSHandler(symbol, self) if type == "live" else HistHandler(symbol)
 
         if not isinstance(self.orderbook, IOrderbook) or not isinstance(self.data_handler, IDataHandler):
             raise ValueError
@@ -36,4 +36,9 @@ class BaseSymbolHandler(ISymbolHandler):
 
 class OKXSymbolHandler(BaseSymbolHandler):
     def parse_message(self, message, type):
+        print(message)
         self.orderbook.orderbook_add(message, type)
+        
+
+    def start(self):
+        self.data_handler.start()
