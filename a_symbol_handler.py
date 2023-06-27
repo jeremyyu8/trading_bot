@@ -49,14 +49,20 @@ class OKXSymbolHandler(BaseSymbolHandler):
         if not isinstance(self.data_handler, IDataHandler):
             raise ValueError
 
-    def parse_message(self, message, type):
-        print("new message", message["data"])
-        print()
+    def parse_message(self, message: dict[str, list[dict]], type: str):
+        # print("new message", message["data"])
+        # print()
 
         if type == "live":
-            self.orderbook.on_trade({"last": message["data"][0]["last"], 
-                                 "lastSz":message["data"][0]["lastSz"],
-                                 "ts": message["data"][0]["ts"]}) 
+            data = message["data"][0]
+            print(data)
+            self.orderbook.on_trade({"last": float(data["last"]), 
+                                 "lastSz": float(data["lastSz"]),
+                                 "ts": float(data["ts"]),
+                                 "askPx": float(data["askPx"]), 
+                                 "askSz": float(data["askSz"]), 
+                                 "bidPx": float(data["bidPx"]), 
+                                 "bidSz": float(data["bidSz"])}) 
             
             self.orderbook.on_order_add("hi")
         else:

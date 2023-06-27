@@ -1,12 +1,12 @@
 class PNLTracker():
     def __init__(self, initial_balance) -> None:
-        self.initial_balance = initial_balance 
+        self.balance = initial_balance 
 
-    def buy(self):
-        pass 
+    def buy(self, amount):
+        self.balance -= amount 
 
-    def sell(self):
-        pass 
+    def sell(self, amount):
+        self.balance += amount 
 
     def get_balance(self):
-        pass
+        return self.balance
