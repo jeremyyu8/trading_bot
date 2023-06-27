@@ -46,10 +46,8 @@ class WSHandler(IDataHandler):
                                           on_close=self.on_close)
         self.ws.on_open = self.on_open
 
-        #x = threading.Thread(target=symbol_handler.start(), daemon = True)
         self.ws.run_forever()
 
-    
     
 
 class HistHandler(IDataHandler):

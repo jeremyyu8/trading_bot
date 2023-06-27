@@ -50,12 +50,9 @@ class OKXSymbolHandler(BaseSymbolHandler):
             raise ValueError
 
     def parse_message(self, message: dict[str, list[dict]], type: str):
-        # print("new message", message["data"])
-        # print()
-
         if type == "live":
             data = message["data"][0]
-            print(data)
+            #print(data)
             self.orderbook.on_trade({"last": float(data["last"]), 
                                  "lastSz": float(data["lastSz"]),
                                  "ts": float(data["ts"]),
@@ -64,7 +61,6 @@ class OKXSymbolHandler(BaseSymbolHandler):
                                  "bidPx": float(data["bidPx"]), 
                                  "bidSz": float(data["bidSz"])}) 
             
-            self.orderbook.on_order_add("hi")
         else:
             pass
         

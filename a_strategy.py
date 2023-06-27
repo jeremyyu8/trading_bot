@@ -36,37 +36,33 @@ class BaseStrategy(IStrategy):
     
 
 class SimpleMovingAvgStrategy(BaseStrategy):
-    def __init__(self, market_data_manager, pnl_tracker, window_size = 14, candle_length_ms = 100) -> None:
+    def __init__(self, market_data_manager, pnl_tracker, window_size = 14) -> None:
         super().__init__(market_data_manager, pnl_tracker) 
-        # self.past_trades = []
-        self.generated_candles = [] # list of {closing prices, time}
         self.window_size = window_size
-        self.candle_length_ms = candle_length_ms
+        self.candles = []
+        self.sum = 0
     
     def on_order_add(self, message):
         pass
 
-    def on_trade_add(self, message: dict[str, float]):
-        # self.past_trades.append(message["last"])
-        # print("here", self.past_trades)
+    def on_trade_add(self, new_candle: dict[str, float], message: dict[str, float]):
+        self.candles.append(new_candle)
+        self.sum += new_candle["price"]
+        if len(self.candles) > self.window_size:
+            popped = self.candles.pop(0)
+            self.sum -= popped["price"]
 
-        if not self.generated_candles or (message["ts"] - self.generated_candles[-1]["ts"] >= self.candle_length_ms):
-            self.generated_candles.append({"price": message["last"], "ts": message["ts"]})
+        assert len(self.candles) == self.window_size
+        cur_moving_avg = self.sum / self.window_size
+        
+        if self.candles[-1]["price"] > cur_moving_avg:
+            print("SMA on trade sell", message["bidPx"])
+            self.pnl_tracker.sell(message["bidPx"], message["bidSz"]) 
+        elif self.candles[-1]["price"] < cur_moving_avg:
+            print("SMA on trade buy", message["askPx"])
+            self.pnl_tracker.buy(message["askPx"], message["askSz"])
 
-        if len(self.generated_candles) > self.window_size:
-            assert len(self.generated_candles) == self.window_size + 1
-            cur_moving_avg = sum([obj["price"] for obj in self.generated_candles[:-1]])/self.window_size # change this to O(1) update, easy to do
-            
-            if self.generated_candles[-1]["price"] > cur_moving_avg:
-                print("SMA on trade sell")
-                self.pnl_tracker.sell(message["bidPx"] * message["bidSz"]) 
-            elif self.generated_candles[-1]["price"] < cur_moving_avg:
-                print("SMA on trade buy")
-                self.pnl_tracker.buy(message["askPx"] * message["askSz"])
-
-            self.generated_candles.pop(0)
-
-            print(self.generated_candles, cur_moving_avg, self.pnl_tracker.get_balance())
+        print("PNL:", self.pnl_tracker.get_balance(message["last"]))
         
     
 
