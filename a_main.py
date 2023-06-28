@@ -1,5 +1,5 @@
 from a_market_data_manager import OkxDataManager 
-from a_pnl_tracker import PNLTracker
+from a_portfolio_manager import PortfolioManager
 
 from a_strategy import SimpleMovingAvgStrategy, RSIStrategy
 
@@ -7,8 +7,8 @@ from a_strategy import SimpleMovingAvgStrategy, RSIStrategy
 
 #initialize data manager, strategies, pnl tracker
 OKX_data_manager = OkxDataManager(symbols=["BTC-USDT"], types=["live"])
-PNL_tracker = PNLTracker(initial_balance=1000000)
-moving_avg = SimpleMovingAvgStrategy(market_data_manager=OKX_data_manager, pnl_tracker=PNL_tracker)
+portfolio_manager = PortfolioManager(initial_balance=1000000, risk_manager="tipp")
+moving_avg = SimpleMovingAvgStrategy(market_data_manager=OKX_data_manager, portfolio_manager=portfolio_manager)
 
 #assign strategies to listen to specific orderbooks
 OKX_data_manager.get_orderbook("BTC-USDT").add_book_listener(strategy=moving_avg)

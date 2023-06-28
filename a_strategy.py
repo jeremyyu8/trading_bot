@@ -17,10 +17,10 @@ class IStrategy():
         raise NotImplementedError  
 
 class BaseStrategy(IStrategy):
-    def __init__(self, market_data_manager, pnl_tracker) -> None:
+    def __init__(self, market_data_manager, portfolio_manager) -> None:
         super().__init__() 
         self.market_data_manager = market_data_manager
-        self.pnl_tracker = pnl_tracker 
+        self.portfolio_manager = portfolio_manager 
 
     def on_order_add(self):
         pass 
@@ -36,8 +36,8 @@ class BaseStrategy(IStrategy):
     
 
 class SimpleMovingAvgStrategy(BaseStrategy):
-    def __init__(self, market_data_manager, pnl_tracker, window_size = 14) -> None:
-        super().__init__(market_data_manager, pnl_tracker) 
+    def __init__(self, market_data_manager, portfolio_manager, window_size = 14) -> None:
+        super().__init__(market_data_manager, portfolio_manager) 
         self.window_size = window_size
         self.candles = []
         self.sum = 0
@@ -56,13 +56,13 @@ class SimpleMovingAvgStrategy(BaseStrategy):
         cur_moving_avg = self.sum / self.window_size
         
         if self.candles[-1]["price"] > cur_moving_avg:
-            print("SMA on trade sell", message["bidPx"])
-            self.pnl_tracker.sell(message["bidPx"], message["bidSz"]) 
+            self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
         elif self.candles[-1]["price"] < cur_moving_avg:
-            print("SMA on trade buy", message["askPx"])
-            self.pnl_tracker.buy(message["askPx"], message["askSz"])
+            self.portfolio_manager.buy(message["askPx"], message["askSz"])
+        else:
+            self.portfolio_manager.rebalance(message["askPx"], message["askSz"])
 
-        print("PNL:", self.pnl_tracker.get_balance(message["last"]))
+        print("PNL:", self.portfolio_manager.get_pnl(message["last"]))
         
     
 
