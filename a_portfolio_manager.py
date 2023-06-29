@@ -70,6 +70,9 @@ class PortfolioManager():
             if self.long > risk_limit:
                 self.sell(price, 0, min(self.long-risk_limit, size))
                 print("Rebalancing: Sold " + str(min(self.long-risk_limit, size)) + " shares at " + str(price))
+                return
+        print("Rebalancing: no shares sold")
+
 
     def get_pnl(self, price):
         return (self.balance + self.long*price) - self.initial_balance
