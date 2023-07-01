@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 class IStrategy():
     def __init__(self) -> None:
         pass
@@ -124,12 +125,15 @@ class RSIStrategy(BaseStrategy):
         print("PNL:", self.portfolio_manager.get_pnl(message["last"]))
 
 class MACDStrategy(BaseStrategy):
-    def __init__(self, market_data_manager, portfolio_manager, short_window = 12, long_window = 26, signal_span = 9) -> None:
+    def __init__(self, market_data_manager, portfolio_manager, short_window = 12, long_window = 26, signal_span = 9, hurst_thresh = 0.5, hurst_len = 60) -> None:
         super().__init__(market_data_manager, portfolio_manager) 
         self.candles = []
+        self.historic_prices = []
         self.short_window = short_window
         self.long_window = long_window
         self.signal_span = signal_span
+        self.hurst_thresh = hurst_thresh
+        self.hurst_len = hurst_len
     
     def on_order_add(self, message):
         pass
@@ -137,8 +141,11 @@ class MACDStrategy(BaseStrategy):
     def on_trade_add(self, new_candle: dict[str, float], message: dict[str, float]):
         #preprocess new candle
         self.candles.append(new_candle["price"])
+        self.historic_prices.append(new_candle["price"])
         if len(self.candles) > self.long_window:
-            popped = self.candles.pop(0)
+            self.candles.pop(0)
+        if len(self.historic_prices) > self.hurst_len:
+            self.historic_prices.pop(0)
 
         assert len(self.candles) == self.long_window
 
@@ -151,12 +158,32 @@ class MACDStrategy(BaseStrategy):
         macd_signal_line = macd.ewm(span=self.signal_span).mean()
         macd = macd.iloc[-1]
         macd_signal_line = macd_signal_line.iloc[-1]
-        
-        #do action based on signal
+
+        #hurst exponent
+        hurst = self.get_hurst_exponent(self.historic_prices)
+
+        #do action based on signal, if hurst > 0.5, place order
         if macd > macd_signal_line:
-            self.portfolio_manager.buy(message["askPx"], message["askSz"])
+            if hurst > self.hurst_thresh:
+                print(hurst)
+                self.portfolio_manager.buy(message["askPx"], message["askSz"])
+                #self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
         elif macd < macd_signal_line:
-            self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
+            if hurst > self.hurst_thresh:
+                print(hurst)
+                #self.portfolio_manager.buy(message["askPx"], message["askSz"])
+                self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
         else:
             self.portfolio_manager.rebalance(message["askPx"], message["askSz"])
         print("PNL:", self.portfolio_manager.get_pnl(message["last"]))
+
+    def get_hurst_exponent(self, time_series, max_lag=20):
+        lags = range(2, max_lag)
+
+        # variances of the lagged differences
+        tau = [np.std(np.subtract(time_series[lag:], time_series[:-lag])) for lag in lags]
+
+        # calculate the slope of the log plot -> the Hurst Exponent
+        reg = np.polyfit(np.log(lags), np.log(tau), 1)
+
+        return reg[0]
