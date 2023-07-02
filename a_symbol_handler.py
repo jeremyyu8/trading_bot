@@ -1,5 +1,6 @@
 from a_orderbook import IOrderbook, PriceLevelBook
 from a_data_handler import IDataHandler, WSHandler, HistHandler
+import csv
 
 class ISymbolHandler():
     def __init__(self) -> None:
@@ -36,23 +37,48 @@ class BaseSymbolHandler(ISymbolHandler):
 class OKXSymbolHandler(BaseSymbolHandler):
     def __init__(self, symbol, type) -> None:
         super().__init__(symbol, type)
+        self.symbol = symbol
 
         if type == "live":
             self.data_handler = WSHandler(
-            url="wss://ws.okx.com:8443/ws/v5/public", 
-            subscription_args=[{"channel": "tickers", "instId": symbol}], 
-            symbol=symbol, 
-            symbol_handler=self)
+                url="wss://ws.okx.com:8443/ws/v5/public", 
+                subscription_args=[{"channel": "tickers", "instId": symbol}], 
+                symbol=symbol, 
+                symbol_handler=self,
+                data_action=type)
+        elif type == "historic":
+            self.data_handler = HistHandler(
+                symbol = symbol,
+                symbol_handler=self)
+            
+        elif type == "download":
+            #initialize csv file
+            filename = self.symbol + '_data.csv'
+            with open(filename, 'w') as csvfile: 
+                # creating a csv writer object 
+                csvwriter = csv.writer(csvfile) 
+                # writing the fields 
+                csvwriter.writerow(["last", "lastSz", "ts", "askPx", "askSz", "bidPx", "bidSz"]) 
+                csvfile.close()
+
+            #start websocket to collect data
+            self.data_handler = WSHandler(
+                url="wss://ws.okx.com:8443/ws/v5/public", 
+                subscription_args=[{"channel": "tickers", "instId": symbol}], 
+                symbol=symbol, 
+                symbol_handler=self,
+                data_action=type)
         else:
-            self.data_handler = HistHandler(symbol)
+            print("Invalid data type.")
 
         if not isinstance(self.data_handler, IDataHandler):
             raise ValueError
 
+
+
     def parse_message(self, message: dict[str, list[dict]], type: str):
         if type == "live":
             data = message["data"][0]
-            #print(data)
             self.orderbook.on_trade({"last": float(data["last"]), 
                                  "lastSz": float(data["lastSz"]),
                                  "ts": float(data["ts"]),
@@ -61,8 +87,27 @@ class OKXSymbolHandler(BaseSymbolHandler):
                                  "bidPx": float(data["bidPx"]), 
                                  "bidSz": float(data["bidSz"])}) 
             
-        else:
-            pass
+        elif type == "historic":
+            data = message
+            self.orderbook.on_trade({"last": float(data["last"]), 
+                                 "lastSz": float(data["lastSz"]),
+                                 "ts": float(data["ts"]),
+                                 "askPx": float(data["askPx"]), 
+                                 "askSz": float(data["askSz"]), 
+                                 "bidPx": float(data["bidPx"]), 
+                                 "bidSz": float(data["bidSz"])}) 
+            
+            
+        elif type == "download":
+            filename = self.symbol + '_data.csv'
+            with open(filename, 'a') as csvfile: 
+                # creating a csv writer object 
+                csvwriter = csv.writer(csvfile) 
+                # writing the fields 
+                data = message["data"][0]
+                fields = [data["last"], data["lastSz"], data["ts"], data["askPx"], data["askSz"], data["bidPx"], data["bidSz"]]
+                csvwriter.writerow(fields) 
+                csvfile.close()
         
 
     def start(self):

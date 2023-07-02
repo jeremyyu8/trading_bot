@@ -125,7 +125,7 @@ class RSIStrategy(BaseStrategy):
         print("PNL:", self.portfolio_manager.get_pnl(message["last"]))
 
 class MACDStrategy(BaseStrategy):
-    def __init__(self, market_data_manager, portfolio_manager, short_window = 12, long_window = 26, signal_span = 9, hurst_thresh = 0.5, hurst_len = 60) -> None:
+    def __init__(self, market_data_manager, portfolio_manager, short_window = 12, long_window = 26, signal_span = 9, hurst_thresh = 0.55, hurst_len = 60) -> None:
         super().__init__(market_data_manager, portfolio_manager) 
         self.candles = []
         self.historic_prices = []
@@ -147,7 +147,8 @@ class MACDStrategy(BaseStrategy):
         if len(self.historic_prices) > self.hurst_len:
             self.historic_prices.pop(0)
 
-        assert len(self.candles) == self.long_window
+        if len(self.candles) != self.long_window:
+            return
 
         #generate signal
         data = pd.DataFrame(self.candles, columns=['price'])

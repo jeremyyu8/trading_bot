@@ -6,7 +6,7 @@ from a_strategy import SimpleMovingAvgStrategy, RSIStrategy, MACDStrategy
 #OKX_data_manager = OkxDataManager(symbols=["BTC-USDT", "LTC-USDT", "ETH-USDT"], types=["live", "live", "live"])
 
 #initialize data manager, strategies, pnl tracker
-OKX_data_manager = OkxDataManager(symbols=["BTC-USDT"], types=["live"])
+OKX_data_manager = OkxDataManager(symbols=["BTC-USDT"], types=["historic"])
 portfolio_manager = PortfolioManager(initial_balance=1000000, risk_manager="tipp")
 #sma = SimpleMovingAvgStrategy(market_data_manager=OKX_data_manager, portfolio_manager=portfolio_manager)
 #rsi = RSIStrategy(market_data_manager=OKX_data_manager, portfolio_manager=portfolio_manager)

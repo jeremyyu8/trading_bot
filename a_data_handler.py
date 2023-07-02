@@ -1,6 +1,7 @@
 import json 
 import websocket
 import typing
+import pandas as pd
 
 BaseSymbolHandler = typing.TypeVar('BaseSymbolHandler')
 
@@ -16,15 +17,19 @@ class IDataHandler():
         raise NotImplementedError
 
 class WSHandler(IDataHandler):
-    def __init__(self, url: str, subscription_args: list[dict], symbol: str, symbol_handler: BaseSymbolHandler) -> None:
+    def __init__(self, url: str, subscription_args: list[dict], symbol: str, symbol_handler: BaseSymbolHandler, data_action: str) -> None:
         super().__init__()
         self.symbol = symbol
         self.symbol_handler = symbol_handler
         self.url = url
         self.subscription_args = subscription_args
+        self.data_action = data_action
     
     def on_message(self, ws, message):
-        self.symbol_handler.parse_message(json.loads(message), "live")
+        if self.data_action == "live":
+            self.symbol_handler.parse_message(json.loads(message), self.data_action)
+        elif self.data_action == "download":
+            self.symbol_handler.parse_message(json.loads(message), self.data_action)
 
     def on_error(self, ws, error):
         print("error:", error)
@@ -51,13 +56,21 @@ class WSHandler(IDataHandler):
     
 
 class HistHandler(IDataHandler):
-    def __init__(self) -> None:
+    def __init__(self, symbol: str, symbol_handler: BaseSymbolHandler) -> None:
         super().__init__()
+        self.symbol = symbol
+        self.symbol_handler = symbol_handler
+        self.file_name = symbol + "_data.csv"
+        self.data = pd.read_csv(self.file_name)
     
-    def on_message(self):
-        pass 
+    def on_message(self, message):
+        self.symbol_handler.parse_message(message, "historic")
 
     def start(self):
-        pass
+        for index, row in self.data.iterrows():
+            self.symbol_handler.parse_message(row, "historic")
+            
+            
+
     
     
