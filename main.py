@@ -1,40 +1,57 @@
+from market_data_manager import BinanceDataManager, OkxDataManager 
+from portfolio_manager import PortfolioManager
 
-'''''
+from strategy import SimpleMovingAvgStrategy, RSIStrategy, MACDStrategy
 
-todo:
-finish all unfinished functions in historic.py, maybe leave live stuff for later?
+#---------PARAMETERS----------
+#equities/symbol that will be traded
+equities = ["BTC-USDT", "ETH-USDT", "LTC-USDT", "XRP-USDT", "BNB-USDT", "ADA-USDT", "SOL-USDT", "TRX-USDT", "DOT-USDT", "UNI-USDT"]
 
-use Risk = (Stop-Loss Price - Entry Price) * Position Size in strategies
-implement stop-loss for risk mitigation 
+#strategies for respective equities/symbol (sma, rsi, macd)
+strategies = ["rsi", "rsi", "sma", "rsi", "macd", "macd", "rsi", "macd", "sma", "rsi"]
 
+#type of data (live, historic, or download)
+data_type = "live"
 
-'''
+#risk manager (cppi, tipp, ratio)
+risk_manager = "tipp"
 
+#initial balance for trading
+initial_balance = 1000000
+#-----------------------------
 
-import requests
-import pandas as pd
+#initialize data manager, portfolio manager
+types = [data_type for i in range(len(equities))]
+OKX_data_manager = OkxDataManager(symbols=equities, types=types)
+portfolio_manager = PortfolioManager(initial_balance=initial_balance, risk_manager=risk_manager, equities=equities)
 
-def make_okx_api_call(endpoint, params=None):
+#initialize strategies
+sma = SimpleMovingAvgStrategy(market_data_manager=OKX_data_manager, portfolio_manager=portfolio_manager)
+rsi = RSIStrategy(market_data_manager=OKX_data_manager, portfolio_manager=portfolio_manager)
+macd = MACDStrategy(market_data_manager=OKX_data_manager, portfolio_manager=portfolio_manager)
+
+#assign strategies to listen to specific orderbooks
+for i, equity in enumerate(equities):
+    if strategies[i] == "sma":
+        OKX_data_manager.get_orderbook(equity).add_book_listener(strategy=sma)
+    elif strategies[i] == "rsi":
+        OKX_data_manager.get_orderbook(equity).add_book_listener(strategy=rsi)
+    elif strategies[i] == "macd":
+        OKX_data_manager.get_orderbook(equity).add_book_listener(strategy=macd)
+    else:
+        print("INVALID STRATEGY")
     
-    base_url = 'https://www.okx.com'
-    url = base_url + endpoint
+#start all strategies
+#OKX_data_manager.start()
 
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
+########## TEMP #########
 
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        raise e
-    except ValueError as e:
-        raise ValueError('API error: {}'.format(e))
+Binance_data_manager = BinanceDataManager(symbols = ["btcusdt"], types = ["live"])
+portfolio_manager = PortfolioManager(initial_balance=initial_balance, risk_manager=risk_manager, equities=["btcusdt"])
+sma = SimpleMovingAvgStrategy(market_data_manager=Binance_data_manager, portfolio_manager=portfolio_manager)
+Binance_data_manager.get_orderbook("btcusdt").add_book_listener(strategy = sma)
+Binance_data_manager.start()
 
+#####################
 
-tickers = pd.DataFrame(make_okx_api_call('/api/v5/market/tickers', {'instType': 'SPOT'})['data'])
-tickers = tickers.drop('instType', axis=1)
-# print(tickers)
-
-
-
-
-
+        

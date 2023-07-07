@@ -1,97 +1,120 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+from strategy import IStrategy
 
-from main import make_okx_api_call
-
-
-class OrderBook:
+class IOrderbook():
     '''
-    Class for storing and updating orderbooks for individual symbols
+    Interface for an orderbook, has callbacks for strategies listening for trades, new orders, etc.
     '''
+    def __init__(self) -> None:
+        pass
 
-    def __init__(self, symbol):
-        self.symbol = symbol
-        self.order_book = None
+    def on_order_add(self):
+        raise NotImplementedError
+    
+    def on_trade(self):
+        raise NotImplementedError 
 
-    def fetch(self, size):
-        params = {"instId": self.symbol, "sz": str(size)}
-        request = make_okx_api_call('/api/v5/market/books', params=params)
-        print(request['data'][0])
-        bids = request['data'][0]['bids']
-        asks = request['data'][0]['asks']
+    # def onOrderRemove(self):
+    #     raise NotImplementedError 
 
-        # weird way data is given, theres quantity at the price in base currency and number of orders??
-        data = {"bidQty": [float(bid[3]) for bid in bids], "bidPx": [float(bid[0]) for bid in bids], "askPx": [
-            float(ask[0]) for ask in asks], "askQty": [float(ask[3]) for ask in asks]}
-        self.order_book = pd.DataFrame(data)
-
-    def get_bids(self):
-        return self.order_book[['bidPx', 'bidQty']]
-
-    def get_asks(self):
-        return self.order_book[['askPx', 'askQty']]
-
-    def get_book(self):
-        return self.order_book
-
-    def get_date(self):
-        '''
-        Returns time in ms
-        '''
-        return self.order_book.ts
-
-    def visualize(self):
-
-        bid_prices, bid_quantities = self.order_book['bidPx'].tolist(
-        ), self.order_book['bidQty'].tolist()
-        ask_prices, ask_quantities = self.order_book['askPx'].tolist(
-        ), self.order_book['askQty'].tolist()
-
-        mean_spread = (bid_prices[0] + ask_prices[0]) / 2
-
-        fig, ax = plt.subplots()
-        ax.bar(bid_prices, bid_quantities, align='edge',
-               width=-0.4, color='g', label='Bids')
-        ax.bar(ask_prices, ask_quantities, align='edge',
-               width=0.4, color='r', label='Asks')
-        ax.axvline(x=mean_spread, color='b',
-                   linestyle='--', label='Mean Spread')
-
-        ax.set_xlabel('Price')
-        ax.set_ylabel('Quantity')
-        ax.set_title(f'Order Book - : {self.symbol}')
-
-        ax.legend()
-
-        plt.tight_layout()
-        plt.show()
+    # def onTradeCancel(self):
+    #     raise NotImplementedError
 
 
-class OrderBookHolder:
+
+class PriceLevelBook(IOrderbook):
+    def __init__(self) -> None:
+        super().__init__()
+        self.book_listeners = []
+        self.generated_candles = [] # list of {closing prices, time}
+        self.candle_length_ms = 1000 # add to input
+        self.stored_length = 10000 # add to input
+        self.candle_start = 0
+        self.prices = [0.0]
+
+    def on_order_add(self, message):
+        pass 
+
+    def generate_candle(self, message):
+        if message["ts"] > self.candle_start+self.candle_length_ms:
+            self.generated_candles.append({"price": sum(self.prices)/len(self.prices)})
+            if len(self.generated_candles) > self.stored_length:
+                self.generated_candles.pop(0)
+            self.candle_start = message["ts"]//self.candle_length_ms * self.candle_length_ms
+            self.prices = [message["last"]]
+            return True
+        else:
+            self.prices.append(message["last"])
+            return False
+        
+
+    def on_trade(self, message):
+        if self.generate_candle(message):
+            for book_listener in self.book_listeners:
+                book_listener.on_trade_add(self.generated_candles[-1], message)
+
+    def add_book_listener(self, strategy):
+        if not isinstance(strategy, IStrategy):
+            raise ValueError
+        
+        self.book_listeners.append(strategy) 
+
+    def remove_book_listener(self, strategy):
+        if not isinstance(strategy, IStrategy):
+            raise ValueError
+        
+        self.book_listeners.remove(strategy)  
+
+# function for managing full price level book, not used in current strategies
+def merge_incremental_data(full_load, incremental_load):
     '''
-    Class for storing and updating multiple orderbooks
+    Merges an incremental book into a full book using two pointers
     '''
+    full_bids, new_bids = full_load["bids"], incremental_load["bids"]
+    full_asks, new_asks = full_load["asks"], incremental_load["asks"]
 
-    def __init__(self, symbols):
-        self.symbols = symbols
-        self.order_books = {symbol: OrderBook(symbol) for symbol in symbols}
+    i = j = 0
+    bids_final = []
+    while i < len(full_bids) and j < len(new_bids):
+        if full_bids[i][0] > new_bids[j][0]:
+            bids_final.append(full_bids[i])
+            i += 1 
+        elif full_bids[i][0] < new_bids[j][0]:
+            bids_final.append(new_bids[j])
+            j += 1 
+        else:
+            if new_bids[j][1] != 0:
+                bids_final.append(new_bids[j])
+            i += 1
+            j += 1
+    
+    while i < len(full_bids): 
+        bids_final.append(full_bids[i])
+        i += 1
+    while j < len(new_bids): 
+        bids_final.append(new_bids[j])
+        j += 1
 
-    def get_symbols(self):
-        return self.symbols
 
-    def fetch_all(self, size):
-        for symbol in self.order_books:
-            self.order_books[symbol].fetch(size)
+    i = j = 0
+    asks_final = []
+    while i < len(full_asks) and j < len(new_asks):
+        if full_asks[i][0] < new_asks[j][0]:
+            asks_final.append(full_asks[i])
+            i += 1 
+        elif full_asks[i][0] > new_asks[j][0]:
+            asks_final.append(new_asks[j])
+            j += 1 
+        else:
+            if new_asks[j][1] != 0:
+                bids_final.append(new_asks[j])
+            i += 1
+            j += 1
+    
+    while i < len(full_asks): 
+        asks_final.append(full_asks[i])
+        i += 1
+    while j < len(new_asks): 
+        asks_final.append(new_asks[j])
+        j += 1
 
-    def __getitem__(self, symbol):
-        return self.order_books[symbol]
-
-
-orderbook = OrderBook('BTC-USDT')
-orderbook.fetch(8)
-print(orderbook.get_book())
-orderbook.visualize()
-
-many_books = OrderBookHolder(['BTC-USDT', 'WIFI-USDT', 'XRP-BTC'])
-many_books.fetch_all(5)
-print(many_books['XRP-BTC'].get_book())
+    return {"bids": bids_final, "asks": asks_final}

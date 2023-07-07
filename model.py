@@ -12,15 +12,6 @@ from sklearn.preprocessing import MinMaxScaler
 data = pd.read_csv('data.csv')
 print("TensorFlow version:", tf.__version__)
 
-# x = np.asarray(data['Date'], dtype='datetime64[s]')
-# y = data['Close']
-# plt.plot(x, y)
-# plt.xlabel("Date")
-# plt.ylabel("Close")
-# plt.title("Bitcoin Prices")
-# plt.tick_params(axis='x', labelrotation=90)
-# plt.show()
-
 train_percent = 0.95
 window = 9
 
