@@ -61,12 +61,12 @@ class SimpleMovingAvgStrategy(BaseStrategy):
         
         #do action based on signal
         if self.candles[-1]["price"] > cur_moving_avg:
-            self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
+            self.portfolio_manager.sell(message["bidPx"], message["bidSz"], message["symbol"]) 
         elif self.candles[-1]["price"] < cur_moving_avg:
-            self.portfolio_manager.buy(message["askPx"], message["askSz"])
+            self.portfolio_manager.buy(message["askPx"], message["askSz"], message["symbol"])
         else:
-            self.portfolio_manager.rebalance(message["askPx"], message["askSz"])
-        print("PNL:", self.portfolio_manager.get_pnl(message["last"]))
+            self.portfolio_manager.rebalance(message["askPx"], message["askSz"], message["symbol"])
+        print("PNL:", self.portfolio_manager.get_pnl())
         
     
 
@@ -117,15 +117,15 @@ class RSIStrategy(BaseStrategy):
         
         #do action based on signal
         if rsi >= self.sell_thresh:
-            self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
+            self.portfolio_manager.sell(message["bidPx"], message["bidSz"], message["symbol"]) 
         elif rsi <= self.buy_thresh:
-            self.portfolio_manager.buy(message["askPx"], message["askSz"])
+            self.portfolio_manager.buy(message["askPx"], message["askSz"], message["symbol"])
         else:
-            self.portfolio_manager.rebalance(message["askPx"], message["askSz"])
-        print("PNL:", self.portfolio_manager.get_pnl(message["last"]))
+            self.portfolio_manager.rebalance(message["askPx"], message["askSz"], message["symbol"])
+        print("PNL:", self.portfolio_manager.get_pnl())
 
 class MACDStrategy(BaseStrategy):
-    def __init__(self, market_data_manager, portfolio_manager, short_window = 12, long_window = 26, signal_span = 9, hurst_thresh = 0.55, hurst_len = 60) -> None:
+    def __init__(self, market_data_manager, portfolio_manager, short_window = 12, long_window = 26, signal_span = 9, hurst_thresh = 0.6, hurst_len = 100) -> None:
         super().__init__(market_data_manager, portfolio_manager) 
         self.candles = []
         self.historic_prices = []
@@ -166,17 +166,13 @@ class MACDStrategy(BaseStrategy):
         #do action based on signal, if hurst > 0.5, place order
         if macd > macd_signal_line:
             if hurst > self.hurst_thresh:
-                print(hurst)
-                self.portfolio_manager.buy(message["askPx"], message["askSz"])
-                #self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
+                self.portfolio_manager.buy(message["askPx"], message["askSz"], message["symbol"])
         elif macd < macd_signal_line:
             if hurst > self.hurst_thresh:
-                print(hurst)
-                #self.portfolio_manager.buy(message["askPx"], message["askSz"])
-                self.portfolio_manager.sell(message["bidPx"], message["bidSz"]) 
+                self.portfolio_manager.sell(message["bidPx"], message["bidSz"], message["symbol"]) 
         else:
-            self.portfolio_manager.rebalance(message["askPx"], message["askSz"])
-        print("PNL:", self.portfolio_manager.get_pnl(message["last"]))
+            self.portfolio_manager.rebalance(message["askPx"], message["askSz"], message["symbol"])
+        print("PNL:", self.portfolio_manager.get_pnl())
 
     def get_hurst_exponent(self, time_series, max_lag=20):
         lags = range(2, max_lag)

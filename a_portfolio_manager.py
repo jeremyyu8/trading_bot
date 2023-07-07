@@ -1,81 +1,127 @@
+import threading
 class PortfolioManager():
-    def __init__(self, initial_balance, risk_manager) -> None:
-        self.long = 0
-        self.short = 0
+    def __init__(self, initial_balance, risk_manager, equities) -> None:
+        self.long = {key: value for key, value in zip(equities, [0 for i in range(len(equities))])}
+        self.short = {key: value for key, value in zip(equities, [0 for i in range(len(equities))])}
+        self.prices = {key: value for key, value in zip(equities, [0 for i in range(len(equities))])}
         self.initial_balance = initial_balance
         self.balance = initial_balance 
         self.risk_manager = risk_manager
         self.convex_risk_manager_equity = 0
+        self.portfolio_lock = threading.Lock()
 
     #Constant Proportion Portfolio Insurance (CPPI)
     def cppi_risk_manager(self, price, max_loss_percent = 0.1, max_asset_downside = 0.2):
         multiplier = 1/max_asset_downside
-        cushion = self.get_pnl(price) + self.initial_balance * max_loss_percent
+        cushion = self.get_pnl() + self.initial_balance * max_loss_percent
         allocated_capital = cushion * multiplier
         return allocated_capital
 
     #Time Invariant Protection Portfolio (TIPP)
-    def tipp_risk_manager(self, price, max_loss_percent = 0.1, max_asset_downside = 0.2):
+    def tipp_risk_manager(self, max_loss_percent = 0.1, max_asset_downside = 0.2):
         multiplier = 1/max_asset_downside
-        cushion = (self.balance + self.long*price) * max_loss_percent
+        cushion = (self.get_pnl() + self.initial_balance) * max_loss_percent
         allocated_capital = cushion * multiplier
         return allocated_capital
     
     #Percent of remaining balance
-    def ratio_risk_manager(self, price, ratio = 0.3):
+    def ratio_risk_manager(self, ratio = 0.3):
         return self.balance*ratio
 
-
-    def purchase_size(self, price, size):
+    #calculate how many shares to purchase based on risk manager type
+    def purchase_size(self, price, size, symbol):
         balance_limit = self.balance/price
         if self.risk_manager == "cppi":
-            risk_limit = self.cppi_risk_manager(price)/price
+            risk_limit = self.cppi_risk_manager()/price
         elif self.risk_manager == "tipp":
-            risk_limit = self.tipp_risk_manager(price)/price
+            risk_limit = self.tipp_risk_manager()/price
         elif self.risk_manager == "ratio":
-            risk_limit = self.ratio_risk_manager(price)/price
+            risk_limit = self.ratio_risk_manager()/price
         else:
             risk_limit = balance_limit
-        risk_limit-=self.long
+        risk_limit-=self.long[symbol]
 
         print(size, balance_limit, risk_limit)
         return(min(size, min(balance_limit, risk_limit)))
 
-    def buy(self, price, size):
-        # use risk management function
-        shares_to_buy = self.purchase_size(price, size)
-        self.balance -= shares_to_buy * price
-        self.long += shares_to_buy
-        print("Bought " + str(shares_to_buy) + " shares at " + str(price))
+    def buy(self, price, size, symbol):
+        
+        self.portfolio_lock.acquire()
 
-    def sell(self, price, size, fixed=None):
+        #update price for pnl calculation
+        self.prices[symbol] = price
+        
+        print("Starting buy")
+
+        # use risk management functionv
+        shares_to_buy = self.purchase_size(price, size, symbol)
+
+        self.balance -= shares_to_buy * price
+        self.long[symbol] += shares_to_buy
+        print("Bought " + str(shares_to_buy) + " shares of " + symbol + " at " + str(price))
+        print("Finished buy")
+
+    
+        self.portfolio_lock.release()
+
+        
+
+    def sell(self, price, size, symbol, fixed=None):
+        self.portfolio_lock.acquire()
+
+        #update price for pnl calculation
+        self.prices[symbol] = price
+
+        print("Starting sell")
         if not fixed:
-            shares_to_sell = min(size, self.long)
+            shares_to_sell = min(size, self.long[symbol])
         else:
             shares_to_sell = fixed
         self.balance += shares_to_sell * price
-        self.long -= shares_to_sell
-        print("Sold " + str(shares_to_sell) + " shares at " + str(price))
+        self.long[symbol] -= shares_to_sell
+        print("Sold " + str(shares_to_sell) + " shares of " + symbol + " at " + str(price))
+        print("Finished sell")
 
-    def rebalance(self, price, size):
+        
+
+        self.portfolio_lock.release()
+
+        
+
+    def rebalance(self, price, size, symbol):
+        self.portfolio_lock.acquire()
+
+        #update price for pnl calculation
+        self.prices[symbol] = price
+
+        print("Starting rebalance")
         risk_limit = None
         if self.risk_manager == "cppi":
-            risk_limit = self.cppi_risk_manager(price)/price
+            risk_limit = self.cppi_risk_manager()/price
         elif self.risk_manager == "tipp":
-            risk_limit = self.tipp_risk_manager(price)/price
+            risk_limit = self.tipp_risk_manager()/price
         elif self.risk_manager == "ratio":
-            risk_limit = self.ratio_risk_manager(price)/price
+            risk_limit = self.ratio_risk_manager()/price
         
         if risk_limit:
-            if self.long > risk_limit:
-                self.sell(price, 0, min(self.long-risk_limit, size))
-                print("Rebalancing: Sold " + str(min(self.long-risk_limit, size)) + " shares at " + str(price))
+            if self.long[symbol] > risk_limit:
+                self.sell(price, 0, symbol, min(self.long[symbol]-risk_limit, size))
+                print("Rebalancing: Sold " + str(min(self.long[symbol]-risk_limit, size)) + " shares of " + symbol + " at " + str(price))
                 return
         print("Rebalancing: no shares sold")
+        print("Finished rebalance")
+
+        
+
+        self.portfolio_lock.release()
 
 
-    def get_pnl(self, price):
-        return (self.balance + self.long*price) - self.initial_balance
+    def get_pnl(self):
+        asset_value = 0
+        for key in self.long:
+            asset_value += self.long[key] * self.prices[key]
+
+        return (self.balance + asset_value) - self.initial_balance
     
     def get_available_balance(self):
         return self.balance

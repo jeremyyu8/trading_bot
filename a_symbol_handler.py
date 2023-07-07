@@ -85,7 +85,8 @@ class OKXSymbolHandler(BaseSymbolHandler):
                                  "askPx": float(data["askPx"]), 
                                  "askSz": float(data["askSz"]), 
                                  "bidPx": float(data["bidPx"]), 
-                                 "bidSz": float(data["bidSz"])}) 
+                                 "bidSz": float(data["bidSz"]),
+                                 "symbol": self.symbol}) 
             
         elif type == "historic":
             data = message
@@ -95,7 +96,8 @@ class OKXSymbolHandler(BaseSymbolHandler):
                                  "askPx": float(data["askPx"]), 
                                  "askSz": float(data["askSz"]), 
                                  "bidPx": float(data["bidPx"]), 
-                                 "bidSz": float(data["bidSz"])}) 
+                                 "bidSz": float(data["bidSz"]),
+                                 "symbol": self.symbol}) 
             
             
         elif type == "download":
