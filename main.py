@@ -1,4 +1,4 @@
-from market_data_manager import BinanceDataManager, OkxDataManager 
+from market_data_manager import BinanceDataManager, CoinbaseDataManager, OkxDataManager 
 from portfolio_manager import PortfolioManager
 
 from strategy import SimpleMovingAvgStrategy, RSIStrategy, MACDStrategy
@@ -46,11 +46,19 @@ for i, equity in enumerate(equities):
 
 ########## TEMP #########
 
-Binance_data_manager = BinanceDataManager(symbols = ["btcusdt"], types = ["live"])
+# Binance_data_manager = BinanceDataManager(symbols = ["btcusdt"], types = ["live"])
+# portfolio_manager = PortfolioManager(initial_balance=initial_balance, risk_manager=risk_manager, equities=["btcusdt"])
+# sma = SimpleMovingAvgStrategy(market_data_manager=Binance_data_manager, portfolio_manager=portfolio_manager)
+# Binance_data_manager.get_orderbook("btcusdt").add_book_listener(strategy = sma)
+# Binance_data_manager.start()
+
+Coinbase_data_manager = CoinbaseDataManager(symbols = ["BTC-USD"], types = ["live"])
 portfolio_manager = PortfolioManager(initial_balance=initial_balance, risk_manager=risk_manager, equities=["btcusdt"])
-sma = SimpleMovingAvgStrategy(market_data_manager=Binance_data_manager, portfolio_manager=portfolio_manager)
-Binance_data_manager.get_orderbook("btcusdt").add_book_listener(strategy = sma)
-Binance_data_manager.start()
+sma = SimpleMovingAvgStrategy(market_data_manager=Coinbase_data_manager, portfolio_manager=portfolio_manager)
+Coinbase_data_manager.get_orderbook("BTC-USD").add_book_listener(strategy = sma)
+Coinbase_data_manager.start()
+
+
 
 #####################
 

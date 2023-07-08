@@ -1,4 +1,4 @@
-from symbol_handler import ISymbolHandler, BinanceSymbolHandler, OKXSymbolHandler
+from symbol_handler import ISymbolHandler, BinanceSymbolHandler, CoinbaseSymbolHandler, OKXSymbolHandler
 import concurrent.futures
 from pynput import keyboard
 import os
@@ -43,6 +43,10 @@ class MarketDataManager:
 class BinanceDataManager(MarketDataManager):
     def create_symbol_handler(self, symbol, type):
         return BinanceSymbolHandler(symbol, type)
+
+class CoinbaseDataManager(MarketDataManager):
+    def create_symbol_handler(self, symbol, type):
+        return CoinbaseSymbolHandler(symbol, type)
 
 class OkxDataManager(MarketDataManager):
     def create_symbol_handler(self, symbol, type):

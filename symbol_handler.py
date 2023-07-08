@@ -1,6 +1,7 @@
 from orderbook import IOrderbook, PriceLevelBook
 from data_handler import IDataHandler, WSHandler, HistHandler
 import csv
+from datetime import datetime
 import time
 
 class ISymbolHandler():
@@ -38,7 +39,6 @@ class BaseSymbolHandler(ISymbolHandler):
         return self.orderbook
 
 class BinanceSymbolHandler(BaseSymbolHandler):
-
     def __init__(self, symbol, type) -> None:
         super().__init__(symbol, type)
         self.symbol = symbol 
@@ -85,7 +85,6 @@ class BinanceSymbolHandler(BaseSymbolHandler):
     def parse_message(self, message, type):
         if type == "live":
             data = message
-            print(message)
             self.orderbook.on_trade({"last": float(data["c"]), 
                                  "lastSz": float(data["Q"]),
                                  "ts": float(data["E"]),
@@ -111,8 +110,93 @@ class BinanceSymbolHandler(BaseSymbolHandler):
                 # creating a csv writer object 
                 csvwriter = csv.writer(csvfile) 
                 # writing the fields 
-                data = message["data"][0]
+                data = message
                 fields = [data["c"], data["Q"], data["E"], data["a"], data["A"], data["b"], data["B"]]
+                csvwriter.writerow(fields) 
+                csvfile.close() 
+
+    def start(self):
+        self.data_handler.start() 
+
+class CoinbaseSymbolHandler(BaseSymbolHandler):
+    def __init__(self, symbol, type) -> None:
+        super().__init__(symbol, type)
+        self.symbol = symbol 
+
+        if type == "live":
+            self.data_handler = WSHandler(
+                url="wss://ws-feed.exchange.coinbase.com/ws", 
+                subscribe_message = {"type": "subscribe",
+                                    "product_ids": [symbol],
+                                    "channels": ["ticker"]}, 
+                symbol=symbol, 
+                symbol_handler=self,
+                data_action=type)
+            
+        elif type == "historic":
+            self.data_handler = HistHandler(
+                symbol = symbol,
+                symbol_handler=self)
+            
+        elif type == "download":
+            #initialize csv file
+            filename = self.symbol + '_data.csv'
+            with open(filename, 'w') as csvfile: 
+                # creating a csv writer object 
+                csvwriter = csv.writer(csvfile) 
+                # writing the fields 
+                csvwriter.writerow(["last", "lastSz", "ts", "askPx", "askSz", "bidPx", "bidSz"]) 
+                csvfile.close()
+
+            #start websocket to collect data
+            self.data_handler = WSHandler(
+                url="wss://ws-feed.exchange.coinbase.com/ws", 
+                subscribe_message = {"type": "subscribe",
+                                    "product_ids": [symbol],
+                                    "channels": ["ticker"]}, 
+                symbol=symbol, 
+                symbol_handler=self,
+                data_action=type)
+        else:
+            print("Invalid data type.")
+
+        if not isinstance(self.data_handler, IDataHandler):
+            raise ValueError
+        
+    
+    def parse_message(self, message, type):
+        if type == "live":
+            data = message
+            ms = int(datetime.fromisoformat(data["time"]).timestamp() * 1000)
+            self.orderbook.on_trade({"last": float(data["price"]), 
+                                 "lastSz": float(data["last_size"]),
+                                 "ts": ms,
+                                 "askPx": float(data["best_ask"]), 
+                                 "askSz": float(data["best_ask_size"]), 
+                                 "bidPx": float(data["best_bid"]), 
+                                 "bidSz": float(data["best_bid_size"]),
+                                 "symbol": self.symbol}) 
+            
+        elif type == "historic":
+            data = message
+            self.orderbook.on_trade({"last": float(data["last"]), 
+                                 "lastSz": float(data["lastSz"]),
+                                 "ts": float(data["ts"]),
+                                 "askPx": float(data["askPx"]), 
+                                 "askSz": float(data["askSz"]), 
+                                 "bidPx": float(data["bidPx"]), 
+                                 "bidSz": float(data["bidSz"]),
+                                 "symbol": self.symbol})      
+        elif type == "download":
+            filename = self.symbol + '_data.csv'
+            with open(filename, 'a') as csvfile: 
+                # creating a csv writer object 
+                csvwriter = csv.writer(csvfile) 
+                # writing the fields 
+                data = message
+                ms = int(datetime.fromisoformat(data["time"]).timestamp() * 1000)
+
+                fields = [data["price"], data["last_size"], ms , data["best_ask"], data["best_ask_size"], data["best_bid"], data["best_bid_size"]]
                 csvwriter.writerow(fields) 
                 csvfile.close() 
 
