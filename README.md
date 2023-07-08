@@ -20,3 +20,5 @@ Risk managing stragies:
 - Constant Proportion Portfolio Insurance (CPPI): sad
 - Time Invariant Protection Portfolio (TIPP): asd
 - Constant Balance Proportion: ads
+
+Future ideas: correlation computations between derivatives, looking for arbitrage opportunities between exchanges
