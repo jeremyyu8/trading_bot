@@ -9,12 +9,14 @@ Functionalities:
 - Data collection: Bot has an option to switch to data collection mode over a set period of time; useful for future backtesting.
 - Backtesting: Bot can run live stragies on .csv imported data, typically collected using the data collection functionality.
 
-Example CLI Usage:
-![Setup for trading BTC, ETH on Coinbase and Binance for 2 hours](/example/pnl_plot.JPG)
+CLI Usage:
+![Setup for trading BTC, ETH on Coinbase and Binance for 2 hours](/example/CLI_example_config.png)
+![Setup for trading BTC, ETH on Coinbase and Binance for 2 hours](/example/CLI_help.png)
 
 Example Results:
-![PNL from trading BTC, ETH on Coinbase and Binance for 2 hours](/example/pnl_plot.JPG)
-![Net position for BTC, ETH on Coinbase](/example/pnl_plot.JPG)
+
+<!-- ![PNL from trading BTC, ETH on Coinbase and Binance for 2 hours](/example/pnl_plot.JPG)
+![Net position for BTC, ETH on Coinbase](/example/pnl_plot.JPG) -->
 
 Signals used for strategies:
 
