@@ -10,7 +10,7 @@ class MarketDataManager:
     Symbols: list of strings like 'BTC-USDT' (symbols to be traded)
     Types: list of strings either 'live' or 'hist' (live trading or backtesting)
     '''
-    def __init__(self, symbols: list[str], types: list[str]):
+    def __init__(self, symbols: list[str] = [], types: list[str] = []):
         self.symbol_handlers = {}
         for symbol,type in zip(symbols, types):
             self.add_symbol_handler(symbol, type)
@@ -41,13 +41,23 @@ class MarketDataManager:
             os._exit(0)
 
 class BinanceDataManager(MarketDataManager):
+    def start(self):
+        print("Initializing Binance Data Manager...")
+        return super().start() 
+
     def create_symbol_handler(self, symbol, type):
         return BinanceSymbolHandler(symbol, type)
 
 class CoinbaseDataManager(MarketDataManager):
+    def start(self):
+        print("Initializing Coinbase Data Manager...")
+        return super().start()
     def create_symbol_handler(self, symbol, type):
         return CoinbaseSymbolHandler(symbol, type)
 
 class OkxDataManager(MarketDataManager):
+    def start(self):
+        print("Initializing OKX Data Manager")
+        return super().start()
     def create_symbol_handler(self, symbol, type):
         return OKXSymbolHandler(symbol, type)

@@ -143,7 +143,6 @@ class MACDStrategy(BaseStrategy):
         pass
 
     def on_trade_add(self, new_candle: dict[str, float], message: dict[str, float]):
-        print("recceived")
         #preprocess new candle
         self.candles.append(new_candle["price"])
         self.historic_prices.append(new_candle["price"])
@@ -160,7 +159,6 @@ class MACDStrategy(BaseStrategy):
         ema_short = data['price'].ewm(span=self.short_window).mean()
         ema_long = data['price'].ewm(span=self.long_window).mean()
         macd = ema_short - ema_long
-
         macd_signal_line = macd.ewm(span=self.signal_span).mean()
         macd = macd.iloc[-1]
         macd_signal_line = macd_signal_line.iloc[-1]
@@ -177,6 +175,8 @@ class MACDStrategy(BaseStrategy):
                 self.portfolio_manager.sell(message["bidPx"], message["bidSz"], message["symbol"]) 
         else:
             self.portfolio_manager.rebalance(message["askPx"], message["askSz"], message["symbol"])
+        
+        
         print("PNL:", self.portfolio_manager.get_pnl())
 
     def get_hurst_exponent(self, time_series, max_lag=20):

@@ -48,6 +48,8 @@ class PriceLevelBook(IOrderbook):
         
 
     def on_trade(self, message):
+        #print(f"{message['symbol']} traded")
+        
         if self.generate_candle(message):
             for book_listener in self.book_listeners:
                 book_listener.on_trade_add(self.generated_candles[-1], message)

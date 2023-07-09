@@ -41,13 +41,13 @@ class BaseSymbolHandler(ISymbolHandler):
 class BinanceSymbolHandler(BaseSymbolHandler):
     def __init__(self, symbol, type) -> None:
         super().__init__(symbol, type)
-        self.symbol = symbol 
+        self.symbol = symbol
 
         if type == "live":
             self.data_handler = WSHandler(
                 url="wss://stream.binance.us:9443/ws", 
                 subscribe_message = {"method": "SUBSCRIBE",
-                                    "params": [f"{symbol}@ticker"],
+                                    "params": [f"{symbol.lower()}@ticker"],
                                     "id": int(time.time())}, 
                 symbol=symbol, 
                 symbol_handler=self,
@@ -71,7 +71,7 @@ class BinanceSymbolHandler(BaseSymbolHandler):
             #start websocket to collect data
             self.data_handler = WSHandler(
                 url="wss://stream.binance.us:9443/ws", 
-                subscription_args=[f"{symbol}@ticker"], 
+                subscription_args=[f"{symbol.lower()}@ticker"], 
                 symbol=symbol, 
                 symbol_handler=self,
                 data_action=type)
