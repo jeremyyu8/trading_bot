@@ -12,6 +12,7 @@ class PortfolioManager():
         self.balance = initial_balance 
         self.risk_manager = risk_manager
         self.convex_risk_manager_equity = 0
+        self.pnls = []
         self.portfolio_lock = threading.Lock()
 
     #Constant Proportion Portfolio Insurance (CPPI)
@@ -128,7 +129,9 @@ class PortfolioManager():
         for key in self.long:
             asset_value += self.long[key] * self.prices[key]
 
-        return (self.balance + asset_value) - self.initial_balance
+        pnl = (self.balance + asset_value) - self.initial_balance
+        self.pnls.append(pnl)
+        return pnl
     
     def get_available_balance(self):
         return self.balance

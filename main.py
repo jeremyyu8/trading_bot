@@ -1,8 +1,10 @@
 from market_data_manager import BinanceDataManager, CoinbaseDataManager, OkxDataManager 
 from portfolio_manager import PortfolioManager
 from strategy import SimpleMovingAvgStrategy, RSIStrategy, MACDStrategy
-
+import concurrent.futures
 import argparse
+from pynput import keyboard
+import os
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
                                  description="Systematic trading bot configuration: Exchanges, Coins, and Strategies are paired up in the order they are provided as arguments\
@@ -13,7 +15,7 @@ exchanges = ['Binance', 'Coinbase', 'OKX']
 cryptocurrencies = ['BTC', 'ETH', 'XRP', 'LTC', 'ADA']
 trading_signals = ['macd', 'rsi', 'sma']
 risk_strategies = ['cppi', 'tipp', 'ratio']
-data_actions = ['live', 'historical', 'download']
+data_actions = ['live', 'historic', 'download']
 
 parser.add_argument('-e', '--exchanges', choices=exchanges, nargs='*', help='Select exchanges (at least one)')
 parser.add_argument('-c', '--currencies', choices=cryptocurrencies, nargs='*', help='Select cryptocurrencies (at least one)')
@@ -91,12 +93,23 @@ def initialize_bot(args):
                 okx_data_manager.add_symbol_handler(symbol=symbol, type=data_action) 
                 okx_data_manager.get_orderbook(symbol).add_book_listener(strategy=strategy_instance)
     
+    def on_press(self, key):
+        if key == keyboard.Key.esc:
+            os._exit(0)
+
     #start data collection and trading
-    if 'Binance' in args.exchanges: binance_data_manager.start()
-    if 'Coinbase' in args.exchanges: coinbase_data_manager.start()
-    if 'OKX' in args.exchanges: okx_data_manager.start()
-
-
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(args.exchanges)+1) as executor:
+        if 'Binance' in args.exchanges: 
+            executor.submit(binance_data_manager.start)
+        if 'Coinbase' in args.exchanges: 
+            executor.submit(coinbase_data_manager.start)
+        if 'OKX' in args.exchanges: 
+            executor.submit(okx_data_manager.start)
+        listener = keyboard.Listener(on_press=on_press)
+        executor.submit(listener.start)
+    
+    
+    
 if args.exchanges and (not args.data_actions or len(args.exchanges) == len(args.currencies) == len(args.trading_signals) == len(args.data_actions)):
     data_actions = args.data_actions if args.data_actions else ['live' for _ in range(len(args.exchanges))]
     print("(Press esc to exit at any time)")
@@ -108,8 +121,8 @@ if args.exchanges and (not args.data_actions or len(args.exchanges) == len(args.
         match data_actions[i]:
             case 'live':
                 print(f"Live trading {args.currencies[i]} using {args.trading_signals[i]} signals on {args.exchanges[i]} exchange")
-            case 'historical':
-                print(f"Historical trading {args.currencies[i]} using {args.trading_signals[i]} signals on {args.exchanges[i]} exchange")
+            case 'historic':
+                print(f"Historic trading {args.currencies[i]} using {args.trading_signals[i]} signals on {args.exchanges[i]} exchange")
             case 'download':
                 print(f"Downloading {args.currencies[i]} data on {args.exchanges[i]} exchange")
     print()

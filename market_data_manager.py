@@ -28,7 +28,7 @@ class MarketDataManager:
             for symbol_handler in self.symbol_handlers.values():
                 executor.submit(symbol_handler.start)
             listener = keyboard.Listener(on_press=self.on_press)
-            executor.submit(listener.start)   
+            #executor.submit(listener.start)   
     
     def get_orderbook(self, symbol):
         return self.symbol_handlers[symbol].get_orderbook()
