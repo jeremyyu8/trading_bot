@@ -5,13 +5,11 @@ class PortfolioManager():
     '''
 
     def __init__(self, initial_balance, risk_manager, equities) -> None:
-        self.long = {key: value for key, value in zip(equities, [0 for i in range(len(equities))])}
-        self.short = {key: value for key, value in zip(equities, [0 for i in range(len(equities))])}
+        self.net_positions = {key: value for key, value in zip(equities, [0 for i in range(len(equities))])}
         self.prices = {key: value for key, value in zip(equities, [0 for i in range(len(equities))])}
         self.initial_balance = initial_balance
         self.balance = initial_balance 
         self.risk_manager = risk_manager
-        self.convex_risk_manager_equity = 0
         self.pnls = []
         self.portfolio_lock = threading.Lock()
 
@@ -44,7 +42,7 @@ class PortfolioManager():
             risk_limit = self.ratio_risk_manager()/price
         else:
             risk_limit = balance_limit
-        risk_limit-=self.long[symbol]
+        risk_limit-=self.net_positions[symbol]
 
         print(size, balance_limit, risk_limit)
         return(min(size, min(balance_limit, risk_limit)))
@@ -62,7 +60,7 @@ class PortfolioManager():
         shares_to_buy = self.purchase_size(price, size, symbol)
 
         self.balance -= shares_to_buy * price
-        self.long[symbol] += shares_to_buy
+        self.net_positions[symbol] += shares_to_buy
         print("Bought " + str(shares_to_buy) + " shares of " + symbol + " at " + str(price))
         print("Finished buy")
 
@@ -81,7 +79,7 @@ class PortfolioManager():
             risk_limit = self.ratio_risk_manager()/price
         else:
             risk_limit = 0
-        risk_limit-=(-self.long[symbol])
+        risk_limit-=(-self.net_positions[symbol])
 
         print(size, risk_limit)
         return(min(size, risk_limit))
@@ -95,12 +93,12 @@ class PortfolioManager():
         print("Starting sell")
         if not fixed:
             shares_to_sell = self.sell_size(price, size, symbol)
-            #shares_to_sell = min(size, self.long[symbol])
+            #shares_to_sell = min(size, self.net_positions[symbol])
         else:
             shares_to_sell = fixed
 
         self.balance += shares_to_sell * price
-        self.long[symbol] -= shares_to_sell
+        self.net_positions[symbol] -= shares_to_sell
         print("Sold " + str(shares_to_sell) + " shares of " + symbol + " at " + str(price))
         print("Finished sell")
 
@@ -128,23 +126,22 @@ class PortfolioManager():
         print(risk_limit)
         
         if risk_limit:
-            if self.long[symbol] > risk_limit:
-                self.sell(price, 0, symbol, min(self.long[symbol]-risk_limit, size))
-                print("Rebalancing: Sold " + str(min(self.long[symbol]-risk_limit, size)) + " shares of " + symbol + " at " + str(price))
+            if self.net_positions[symbol] > risk_limit:
+                self.sell(price, 0, symbol, min(self.net_positions[symbol]-risk_limit, size))
+                print("Rebalancing: Sold " + str(min(self.net_positions[symbol]-risk_limit, size)) + " shares of " + symbol + " at " + str(price))
                 self.portfolio_lock.release()
                 return
         print("Rebalancing: no shares sold")
         print("Finished rebalance")
 
         
-
         self.portfolio_lock.release()
 
 
     def get_pnl(self):
         asset_value = 0
-        for key in self.long:
-            asset_value += self.long[key] * self.prices[key]
+        for key in self.net_positions:
+            asset_value += self.net_positions[key] * self.prices[key]
 
         pnl = (self.balance + asset_value) - self.initial_balance
         self.pnls.append(pnl)
