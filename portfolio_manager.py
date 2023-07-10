@@ -71,6 +71,21 @@ class PortfolioManager():
 
         
 
+    #calculate how many shares to sell based on risk manager type
+    def sell_size(self, price, size, symbol):
+        if self.risk_manager == "cppi":
+            risk_limit = self.cppi_risk_manager()/price
+        elif self.risk_manager == "tipp":
+            risk_limit = self.tipp_risk_manager()/price
+        elif self.risk_manager == "ratio":
+            risk_limit = self.ratio_risk_manager()/price
+        else:
+            risk_limit = 0
+        risk_limit-=(-self.long[symbol])
+
+        print(size, risk_limit)
+        return(min(size, risk_limit))
+    
     def sell(self, price, size, symbol, fixed=None):
         self.portfolio_lock.acquire()
 
@@ -79,9 +94,11 @@ class PortfolioManager():
 
         print("Starting sell")
         if not fixed:
-            shares_to_sell = min(size, self.long[symbol])
+            shares_to_sell = self.sell_size(price, size, symbol)
+            #shares_to_sell = min(size, self.long[symbol])
         else:
             shares_to_sell = fixed
+
         self.balance += shares_to_sell * price
         self.long[symbol] -= shares_to_sell
         print("Sold " + str(shares_to_sell) + " shares of " + symbol + " at " + str(price))
