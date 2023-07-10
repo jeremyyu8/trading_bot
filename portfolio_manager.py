@@ -2,6 +2,7 @@ import threading
 from pynput import keyboard
 import matplotlib.pyplot as plt
 from datetime import datetime 
+import json 
 
 class PortfolioManager():
     '''
@@ -129,7 +130,7 @@ class PortfolioManager():
         elif self.risk_manager == "ratio":
             risk_limit = self.ratio_risk_manager()/price
 
-        print(risk_limit)
+        # print(risk_limit)
         
         if risk_limit:
             if self.net_positions[symbol] > risk_limit:
@@ -166,6 +167,10 @@ class PortfolioManager():
         return self.balance
 
     def plot(self):
+        
+        # with open("file.json", 'w') as f:
+        #     json.dump([self.pnls_over_time, self.net_position_values_over_time], f, indent=2) 
+
         finish_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         plt.figure(figsize=(12,6))
         plt.plot(self.pnls_over_time, linewidth=2, label="PNL")

@@ -21,7 +21,7 @@ Trade notification example:
 
 <!-- <!-- ![PNL from trading BTC, ETH on Coinbase and Binance for 2 hours](/example/pnl_plot.JPG) -->
 
-![Trading various coins on OKX](/example/temp_pnl.png)
+![Trading various coins on OKX](/example/example_pnl.png)
 
 **Signals used for strategies:**
 

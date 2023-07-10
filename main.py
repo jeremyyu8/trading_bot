@@ -24,7 +24,7 @@ parser.add_argument('-c', '--currencies', choices=cryptocurrencies, nargs='*', h
 parser.add_argument('-s', '--trading_signals', choices=trading_signals, nargs='*', help='Select trading strategies (at least one, unless data action is download)')
 parser.add_argument('-r', '--risk_manager', choices=risk_strategies, type = str, help='Select a risk management strategy (default: cppi)', default="cppi")
 parser.add_argument('-d', '--data_action', choices=data_actions, type = str, help = 'Select data actions (default: \'live\')', default="live")
-parser.add_argument('-b', '--balance', type = float, help = 'Select initial balance (default: 100000)', default=100000)
+parser.add_argument('-b', '--balance', type = float, help = 'Select initial balance (default: 1000000)', default=1000000)
 
 args = parser.parse_args()
 
