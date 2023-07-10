@@ -15,8 +15,9 @@ CLI Usage:
 
 Example Results:
 
-<!-- ![PNL from trading BTC, ETH on Coinbase and Binance for 2 hours](/example/pnl_plot.JPG)
-![Net position for BTC, ETH on Coinbase](/example/pnl_plot.JPG) -->
+<!-- <!-- ![PNL from trading BTC, ETH on Coinbase and Binance for 2 hours](/example/pnl_plot.JPG) -->
+
+![Trading various coins on OKX](/example/temp_pnl.png) -->
 
 Signals used for strategies:
 
