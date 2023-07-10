@@ -238,7 +238,8 @@ class OKXSymbolHandler(BaseSymbolHandler):
             #start websocket to collect data
             self.data_handler = WSHandler(
                 url="wss://ws.okx.com:8443/ws/v5/public", 
-                subscription_args=[{"channel": "tickers", "instId": symbol}], 
+                subscribe_message = {"op": "subscribe",
+                                    "args": [{"channel": "tickers", "instId": symbol}]}, 
                 symbol=symbol, 
                 symbol_handler=self,
                 data_action=type)
