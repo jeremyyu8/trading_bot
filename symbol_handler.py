@@ -60,7 +60,7 @@ class BinanceSymbolHandler(BaseSymbolHandler):
             
         elif type == "download":
             #initialize csv file
-            filename = self.symbol + '_data.csv'
+            filename = 'historical_data/' + self.symbol + '_data.csv'
             with open(filename, 'w') as csvfile: 
                 # creating a csv writer object 
                 csvwriter = csv.writer(csvfile) 
@@ -71,7 +71,9 @@ class BinanceSymbolHandler(BaseSymbolHandler):
             #start websocket to collect data
             self.data_handler = WSHandler(
                 url="wss://stream.binance.us:9443/ws", 
-                subscription_args=[f"{symbol.lower()}@ticker"], 
+                subscribe_message = {"method": "SUBSCRIBE",
+                                    "params": [f"{symbol.lower()}@ticker"],
+                                    "id": int(time.time())}, 
                 symbol=symbol, 
                 symbol_handler=self,
                 data_action=type)
@@ -105,7 +107,7 @@ class BinanceSymbolHandler(BaseSymbolHandler):
                                  "bidSz": float(data["bidSz"]),
                                  "symbol": self.symbol})      
         elif type == "download":
-            filename = self.symbol + '_data.csv'
+            filename = 'historical_data/' + self.symbol + '_data.csv'
             with open(filename, 'a') as csvfile: 
                 # creating a csv writer object 
                 csvwriter = csv.writer(csvfile) 
@@ -140,7 +142,7 @@ class CoinbaseSymbolHandler(BaseSymbolHandler):
             
         elif type == "download":
             #initialize csv file
-            filename = self.symbol + '_data.csv'
+            filename = 'historical_data/' + self.symbol + '_data.csv'
             with open(filename, 'w') as csvfile: 
                 # creating a csv writer object 
                 csvwriter = csv.writer(csvfile) 
@@ -167,6 +169,7 @@ class CoinbaseSymbolHandler(BaseSymbolHandler):
     def parse_message(self, message, type):
         if type == "live":
             data = message
+            #print(data)
             ms = int(datetime.fromisoformat(data["time"]).timestamp() * 1000)
             self.orderbook.on_trade({"last": float(data["price"]), 
                                  "lastSz": float(data["last_size"]),
@@ -188,7 +191,7 @@ class CoinbaseSymbolHandler(BaseSymbolHandler):
                                  "bidSz": float(data["bidSz"]),
                                  "symbol": self.symbol})      
         elif type == "download":
-            filename = self.symbol + '_data.csv'
+            filename = 'historical_data/' + self.symbol + '_data.csv'
             with open(filename, 'a') as csvfile: 
                 # creating a csv writer object 
                 csvwriter = csv.writer(csvfile) 
@@ -224,7 +227,7 @@ class OKXSymbolHandler(BaseSymbolHandler):
             
         elif type == "download":
             #initialize csv file
-            filename = self.symbol + '_data.csv'
+            filename = 'historical_data/' + self.symbol + '_data.csv'
             with open(filename, 'w') as csvfile: 
                 # creating a csv writer object 
                 csvwriter = csv.writer(csvfile) 
@@ -272,7 +275,7 @@ class OKXSymbolHandler(BaseSymbolHandler):
             
             
         elif type == "download":
-            filename = self.symbol + '_data.csv'
+            filename = 'historical_data/' + self.symbol + '_data.csv'
             with open(filename, 'a') as csvfile: 
                 # creating a csv writer object 
                 csvwriter = csv.writer(csvfile) 

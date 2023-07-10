@@ -34,7 +34,7 @@ class WSHandler(IDataHandler):
 
     def on_error(self, ws, error):
         pass 
-        #print("error:", error)
+        print("error:", error)
     
     def on_close(self, ws):
         print("Connection closed")

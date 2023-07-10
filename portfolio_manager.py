@@ -15,7 +15,7 @@ class PortfolioManager():
         self.portfolio_lock = threading.Lock()
 
     #Constant Proportion Portfolio Insurance (CPPI)
-    def cppi_risk_manager(self, price, max_loss_percent = 0.1, max_asset_downside = 0.2):
+    def cppi_risk_manager(self, max_loss_percent = 0.1, max_asset_downside = 0.2):
         multiplier = 1/max_asset_downside
         cushion = self.get_pnl() + self.initial_balance * max_loss_percent
         allocated_capital = cushion * multiplier
@@ -106,11 +106,14 @@ class PortfolioManager():
             risk_limit = self.tipp_risk_manager()/price
         elif self.risk_manager == "ratio":
             risk_limit = self.ratio_risk_manager()/price
+
+        print(risk_limit)
         
         if risk_limit:
             if self.long[symbol] > risk_limit:
                 self.sell(price, 0, symbol, min(self.long[symbol]-risk_limit, size))
                 print("Rebalancing: Sold " + str(min(self.long[symbol]-risk_limit, size)) + " shares of " + symbol + " at " + str(price))
+                self.portfolio_lock.release()
                 return
         print("Rebalancing: no shares sold")
         print("Finished rebalance")

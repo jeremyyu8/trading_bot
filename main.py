@@ -19,13 +19,19 @@ parser.add_argument('-e', '--exchanges', choices=exchanges, nargs='*', help='Sel
 parser.add_argument('-c', '--currencies', choices=cryptocurrencies, nargs='*', help='Select cryptocurrencies (at least one)')
 parser.add_argument('-s', '--trading_signals', choices=trading_signals, nargs='*', help='Select trading strategies (at least one)')
 parser.add_argument('-r', '--risk_manager', choices=risk_strategies, type = str, help='Select a risk management strategy (default: cppi)', default="cppi")
-parser.add_argument('-d', '--data_actions', choices=data_actions, type = str, help = 'Select data actions (default: \'live\' for everything)')
+parser.add_argument('-d', '--data_actions', choices=data_actions, nargs='*', help = 'Select data actions (default: \'live\' for everything)')
 parser.add_argument('-b', '--balance', type = float, help = 'Select initial balance (default: 1000000)', default=1000000)
 
 args = parser.parse_args()
 
 #function to initialize everything using parsed args
 def initialize_bot(args):
+    print(args.exchanges)
+    print(args.currencies)
+    print(args.trading_signals)
+    print(args.risk_manager)
+    print(args.data_actions)
+    print(args.balance)
     assert len(args.exchanges) == len(args.currencies) == len(args.trading_signals)
 
     #dictionary for mapping currencies to exchange-specific symbol names
@@ -48,6 +54,7 @@ def initialize_bot(args):
 
     #initialize (exchange, currency, strategy) connections
     for exchange, currency, strategy, data_action in zip(args.exchanges, args.currencies, args.trading_signals, data_actions):
+        print(exchange, currency, strategy, data_action)
         symbol = exchange_to_symbol[exchange][currency]
         match exchange:
             case 'Binance':

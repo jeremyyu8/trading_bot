@@ -166,12 +166,12 @@ class MACDStrategy(BaseStrategy):
         #hurst exponent
         hurst = self.get_hurst_exponent(self.historic_prices)
 
+        print(macd, macd_signal_line)
+
         #do action based on signal, if hurst > 0.5, place order
-        if macd > macd_signal_line:
-            if hurst > self.hurst_thresh:
+        if macd > macd_signal_line and hurst > self.hurst_thresh:
                 self.portfolio_manager.buy(message["askPx"], message["askSz"], message["symbol"])
-        elif macd < macd_signal_line:
-            if hurst > self.hurst_thresh:
+        elif macd < macd_signal_line and hurst > self.hurst_thresh:
                 self.portfolio_manager.sell(message["bidPx"], message["bidSz"], message["symbol"]) 
         else:
             self.portfolio_manager.rebalance(message["askPx"], message["askSz"], message["symbol"])
