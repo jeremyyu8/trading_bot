@@ -5,7 +5,6 @@ import concurrent.futures
 import argparse
 from pynput import keyboard
 import os
-import signal 
 
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
@@ -121,6 +120,7 @@ if (args.data_action != "download" and args.exchanges and args.currencies and ar
                 print(f"Historic trading {args.currencies[i]} using {args.trading_signals[i]} signals on {args.exchanges[i]} exchange")
             case 'download':
                 print(f"Downloading {args.currencies[i]} data on {args.exchanges[i]} exchange")
+    if args.data_action != "download": print(f"Using {args.risk_manager} risk manager, initial balance is {args.balance}")
     print()
     initialize_bot(args=args)
 

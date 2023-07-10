@@ -51,7 +51,7 @@ class PortfolioManager():
         risk_limit-=self.net_positions[symbol]
 
         # print(size, balance_limit, risk_limit)
-        return(min(size, min(balance_limit, risk_limit)))
+        return max(0, min(size, min(balance_limit, risk_limit)))
 
     def buy(self, price, size, symbol):
         
@@ -88,7 +88,7 @@ class PortfolioManager():
         risk_limit-=(-self.net_positions[symbol])
 
         # print(size, risk_limit)
-        return(min(size, risk_limit))
+        return max(0, min(size, risk_limit))
     
     def sell(self, price, size, symbol, fixed=None):
         self.portfolio_lock.acquire()

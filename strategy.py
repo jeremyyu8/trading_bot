@@ -166,7 +166,7 @@ class MACDStrategy(BaseStrategy):
         #hurst exponent
         hurst = self.get_hurst_exponent(self.historic_prices)
 
-        print(macd, macd_signal_line)
+        # print(macd, macd_signal_line)
 
         #do action based on signal, if hurst > 0.5, place order
         if macd > macd_signal_line and hurst > self.hurst_thresh:
