@@ -58,7 +58,9 @@ class SimpleMovingAvgStrategy(BaseStrategy):
         if len(self.candles) > self.window_size:
             popped = self.candles.pop(0)
             self.sum -= popped["price"]
-        assert len(self.candles) == self.window_size
+
+        if len(self.candles) != self.window_size:
+            return
 
         #generate signal
         cur_moving_avg = self.sum / self.window_size
@@ -109,7 +111,9 @@ class RSIStrategy(BaseStrategy):
                 self.downs -= abs(popped)
 
         self.last_price = new_candle["price"]
-        assert len(self.deltas) == self.window_size
+
+        if len(self.deltas) != self.window_size:
+            return
         
         #generate signal
         avg_ups = self.ups/self.window_size
@@ -166,7 +170,6 @@ class MACDStrategy(BaseStrategy):
         #hurst exponent
         hurst = self.get_hurst_exponent(self.historic_prices)
 
-        # print(macd, macd_signal_line)
 
         #do action based on signal, if hurst > 0.5, place order
         if macd > macd_signal_line and hurst > self.hurst_thresh:

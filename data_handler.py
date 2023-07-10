@@ -60,6 +60,7 @@ class HistHandler(IDataHandler):
         self.symbol_handler = symbol_handler
         self.file_name = 'historical_data/' + symbol + "_data.csv"
         self.data = pd.read_csv(self.file_name)
+        print(self.data.size)
     
     def on_message(self, message):
         self.symbol_handler.parse_message(message, "historic")

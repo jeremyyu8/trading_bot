@@ -22,14 +22,14 @@ class PortfolioManager():
     #Constant Proportion Portfolio Insurance (CPPI)
     def cppi_risk_manager(self, max_loss_percent = 0.1, max_asset_downside = 0.2):
         multiplier = 1/max_asset_downside
-        cushion = self.get_pnl() + self.initial_balance * max_loss_percent
+        cushion = self.get_pnl_without_save() + self.initial_balance * max_loss_percent
         allocated_capital = cushion * multiplier
         return allocated_capital
 
     #Time Invariant Protection Portfolio (TIPP)
     def tipp_risk_manager(self, max_loss_percent = 0.1, max_asset_downside = 0.2):
         multiplier = 1/max_asset_downside
-        cushion = (self.get_pnl() + self.initial_balance) * max_loss_percent
+        cushion = (self.get_pnl_without_save() + self.initial_balance) * max_loss_percent
         allocated_capital = cushion * multiplier
         return allocated_capital
     
@@ -129,18 +129,17 @@ class PortfolioManager():
         elif self.risk_manager == "ratio":
             risk_limit = self.ratio_risk_manager()/price
 
-        # print(risk_limit)
+        print(risk_limit)
         
         if risk_limit:
             if self.net_positions[symbol] > risk_limit:
-                self.sell(price, 0, symbol, min(self.net_positions[symbol]-risk_limit, size))
-                print("Rebalancing: Sold " + str(min(self.net_positions[symbol]-risk_limit, size)) + " shares of " + symbol + " at " + str(price))
+                print("Finished rebalance: selling shares now")
                 self.portfolio_lock.release()
+
+                self.sell(price, 0, symbol, min(self.net_positions[symbol]-risk_limit, size))
                 return
         print("Rebalancing: no shares sold")
         print("Finished rebalance")
-
-        
         self.portfolio_lock.release()
 
 
@@ -154,6 +153,13 @@ class PortfolioManager():
         pnl = (self.balance + asset_value) - self.initial_balance
         self.pnls_over_time.append(pnl)
         return pnl
+    
+    def get_pnl_without_save(self):
+        asset_value = 0
+        for key in self.net_positions:
+            cur_equity_value = self.net_positions[key] * self.prices[key]
+            asset_value += cur_equity_value
+        return (self.balance + asset_value) - self.initial_balance
     
     
     def get_available_balance(self):
