@@ -26,19 +26,13 @@ class MarketDataManager:
     def start(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.symbol_handlers)+1) as executor:
             for symbol_handler in self.symbol_handlers.values():
-                executor.submit(symbol_handler.start)
-            listener = keyboard.Listener(on_press=self.on_press)
-            #executor.submit(listener.start)   
+                executor.submit(symbol_handler.start) 
     
     def get_orderbook(self, symbol):
         return self.symbol_handlers[symbol].get_orderbook()
     
     def create_symbol_handler(self):
         raise NotImplementedError
-    
-    def on_press(self, key):
-        if key == keyboard.Key.esc:
-            os._exit(0)
 
 class BinanceDataManager(MarketDataManager):
     def start(self):

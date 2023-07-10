@@ -32,9 +32,8 @@ class WSHandler(IDataHandler):
         elif self.data_action == "download":
             self.symbol_handler.parse_message(json.loads(message), self.data_action)
 
-    def on_error(self, ws, error):
-        pass 
-        print("error:", error)
+    def on_error(self, ws, error): 
+        print("websocket packet loss:", error)
     
     def on_close(self, ws):
         print("Connection closed")
