@@ -7,14 +7,8 @@ class IStrategy():
     def __init__(self) -> None:
         pass
 
-    def on_order_add(self):
-        raise NotImplementedError 
-
     def on_trade_add(self):
         raise NotImplementedError
-    
-    # def on_order_remove(self):
-    #     raise NotImplementedError  
 
     def add_book_listener(self):
         raise NotImplementedError 
@@ -28,9 +22,7 @@ class BaseStrategy(IStrategy):
         self.market_data_manager = market_data_manager
         self.portfolio_manager = portfolio_manager 
 
-    def on_order_add(self):
-        pass 
-
+    # for each strategy every time new candle is received, generate new signal, then send buy or sell to portfolio manager
     def on_trade_add(self):
         pass
 
@@ -47,9 +39,6 @@ class SimpleMovingAvgStrategy(BaseStrategy):
         self.window_size = window_size
         self.candles = []
         self.sum = 0
-    
-    def on_order_add(self, message):
-        pass
 
     def on_trade_add(self, new_candle: dict[str, float], message: dict[str, float]):
         #preprocess new candle
@@ -86,9 +75,6 @@ class RSIStrategy(BaseStrategy):
         self.downs = 0
         self.buy_thresh = buy_thresh
         self.sell_thresh = sell_thresh
-
-    def on_order_add(self):
-        pass
 
     def on_trade_add(self, new_candle: dict[str, float], message: dict[str, float]):
         #preprocess new candle
@@ -142,9 +128,6 @@ class MACDStrategy(BaseStrategy):
         self.signal_span = signal_span
         self.hurst_thresh = hurst_thresh
         self.hurst_len = hurst_len
-    
-    def on_order_add(self, message):
-        pass
 
     def on_trade_add(self, new_candle: dict[str, float], message: dict[str, float]):
         #preprocess new candle

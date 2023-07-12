@@ -8,9 +8,12 @@ class ISymbolHandler():
     '''
     Interface for handling one individual symbol on an exchange
     '''
+
+    #for each symbol handler, there is unique initialization for live, historic, and download
     def __init__(self) -> None:
         pass
     
+    #for each symbol handler, there is unique message that needs to be parsed for live, historic, and download
     def parse_message(self):
         raise NotImplementedError 
     
@@ -117,8 +120,6 @@ class BinanceSymbolHandler(BaseSymbolHandler):
                 csvwriter.writerow(fields) 
                 csvfile.close() 
 
-    def start(self):
-        self.data_handler.start() 
 
 class CoinbaseSymbolHandler(BaseSymbolHandler):
     def __init__(self, symbol, type) -> None:
@@ -203,9 +204,6 @@ class CoinbaseSymbolHandler(BaseSymbolHandler):
                 csvwriter.writerow(fields) 
                 csvfile.close() 
 
-    def start(self):
-        self.data_handler.start() 
-
 class OKXSymbolHandler(BaseSymbolHandler):
     def __init__(self, symbol, type) -> None:
         super().__init__(symbol, type)
@@ -285,8 +283,4 @@ class OKXSymbolHandler(BaseSymbolHandler):
                 fields = [data["last"], data["lastSz"], data["ts"], data["askPx"], data["askSz"], data["bidPx"], data["bidSz"]]
                 csvwriter.writerow(fields) 
                 csvfile.close()
-        
-
-    def start(self):
-        self.data_handler.start()
 

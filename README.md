@@ -1,13 +1,13 @@
 # trading_bot
 
-Crypto systematic trading bot that collects market data from Binance and OKX exchanges and executes various strategies. Bot is fully configurable with CLI, i.e. can mix and match exchanges, coins, trade signals, and risk management strategies.
+Systematic trading bot for cryptocurrencies that collects market data from Binance, Coinbase, and OKX exchanges and executes various strategies. Trading bot is fully configurable with CLI, i.e. can mix and match exchanges, coins, strategies, and risk management strategies.
 
 **Functionalities:**
 
 - Live trading: Strategies listen to coins on various exchanges and simulate executing trades (note: not trading real money) based on momentum, mean reversion, volatility, etc.
 - Portfolio risk managing: Trade signals pass through a portfolio manager that manage risk using position sizing and trade risk allocation.
 - Data collection: Bot has an option to switch to data collection mode over a set period of time; useful for future backtesting.
-- Backtesting: Bot can run live stragies on .csv imported data, typically collected using the data collection functionality.
+- Backtesting: Bot can run live stragies on .csv data collected using the data collection functionality.
 
 **CLI Usage:**
 Help:
@@ -17,7 +17,7 @@ Example configuration:
 Trade notification example:
 ![](/example/CLI_example_trade_temp.png)
 
-**Example Results:**
+**Example Results Using MACD + Hurst Exponent Strategy on OKX Exchange:**
 
 <!-- <!-- ![PNL from trading BTC, ETH on Coinbase and Binance for 2 hours](/example/pnl_plot.JPG) -->
 
@@ -32,8 +32,8 @@ Trade notification example:
 
 **Risk managing strategies:**
 
-- Constant Proportion Portfolio Insurance (CPPI): adjusts the allocation of positions between high risk and low risk instruments
-- Time Invariant Protection Portfolio (TIPP): maintains fixed allocation of assets accross instruments, ignoring market conditions
-- Constant Balance Proportion: approaches risk using a fixed allocation ratio between risky and risk-free assets and periodic rebalancing
+- Constant Proportion Portfolio Insurance (CPPI): adjusts the allocation of positions between high risk and low risk (cash) instruments based on initial balance
+- Time Invariant Protection Portfolio (TIPP): adjusts the allocation of positions between high risk and low risk (cash) instruments based on initial balance and overall PNL
+- Constant Balance Proportion: approaches risk using a fixed ratio of available balance for trades
 
 **Future ideas: perform correlation computations between derivatives, look for arbitrage opportunities between exchanges**

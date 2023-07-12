@@ -23,6 +23,7 @@ class MarketDataManager:
         else:
             self.symbol_handlers[symbol] = new_symbol_handler
     
+    #start all symbol handlers simultaneously using thread executor for specific exchange
     def start(self):
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.symbol_handlers)+1) as executor:
             for symbol_handler in self.symbol_handlers.values():

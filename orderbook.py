@@ -26,14 +26,15 @@ class PriceLevelBook(IOrderbook):
         super().__init__()
         self.book_listeners = []
         self.generated_candles = [] # list of {closing prices, time}
-        self.candle_length_ms = 1000 # add to input
-        self.stored_length = 10000 # add to input
+        self.candle_length_ms = 1000 # length of candles (ms)
+        self.stored_length = 10000 # how many candles get stored in memory
         self.candle_start = 0
         self.prices = [0.0]
 
     def on_order_add(self, message):
         pass 
 
+    #generate candles for strategies based on average price in last period
     def generate_candle(self, message):
         if message["ts"] > self.candle_start+self.candle_length_ms:
             self.generated_candles.append({"price": sum(self.prices)/len(self.prices)})
@@ -48,8 +49,7 @@ class PriceLevelBook(IOrderbook):
         
 
     def on_trade(self, message):
-        #print(f"{message['symbol']} traded")
-        
+        #if new candle generated, run strategies that use this specific orderbook
         if self.generate_candle(message):
             for book_listener in self.book_listeners:
                 book_listener.on_trade_add(self.generated_candles[-1], message)
@@ -65,6 +65,8 @@ class PriceLevelBook(IOrderbook):
             raise ValueError
         
         self.book_listeners.remove(strategy)  
+
+
 
 # function for managing full price level book, not used in current strategies
 def merge_incremental_data(full_load, incremental_load):

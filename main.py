@@ -84,6 +84,7 @@ def initialize_bot(args):
                 okx_data_manager.add_symbol_handler(symbol=symbol, type=args.data_action) 
                 if args.data_action != "download": okx_data_manager.get_orderbook(symbol).add_book_listener(strategy=strategy_instance)
     
+    #listener function for esc key press to stop script
     def on_press(key):
         if key == keyboard.Key.esc:
             if args.data_action != "download": portfolio_manager.plot()
@@ -91,7 +92,7 @@ def initialize_bot(args):
         else:
             print("A key has been pressed. Press esc if you are trying to exit.")
 
-    #start data collection and trading
+    #use threading to start data manager for each exchange
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(args.exchanges)+1) as executor:
         if 'Binance' in args.exchanges: 
             executor.submit(binance_data_manager.start)
@@ -103,7 +104,7 @@ def initialize_bot(args):
         executor.submit(listener.start)
     
     
-    
+#check paramters and print configuration
 if (args.data_action != "download" and args.exchanges and args.currencies and args.trading_signals and len(args.exchanges) == len(args.currencies) == len(args.trading_signals)) or (args.data_action == "download" and args.exchanges and args.currencies and len(args.exchanges) == len(args.currencies)):
     print("(Press esc to exit at any time)")
     print()
@@ -122,9 +123,12 @@ if (args.data_action != "download" and args.exchanges and args.currencies and ar
                 print(f"Downloading {args.currencies[i]} data on {args.exchanges[i]} exchange")
     if args.data_action != "download": print(f"Using {args.risk_manager} risk manager, initial balance is {args.balance}")
     print()
+
+    #initialize trading bot
     initialize_bot(args=args)
 
 else: 
+    #if configuration wrong, output what extra info is needed
     if not args.exchanges: 
         print("Need exchanges")
     if not args.currencies:

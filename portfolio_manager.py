@@ -51,31 +51,30 @@ class PortfolioManager():
             risk_limit = balance_limit
         risk_limit-=self.net_positions[symbol]
 
-        # print(size, balance_limit, risk_limit)
         return max(0, min(size, min(balance_limit, risk_limit)))
 
     def buy(self, price, size, symbol):
-        
+        #aquire lock to prevent two executed trades changing balance at same time
         self.portfolio_lock.acquire()
 
         #update price for pnl calculation
         self.prices[symbol] = price
         
-        print("Starting buy")
 
-        # use risk management functionv
+        print("Starting buy")
+        # use risk management function to calculate purchas size
         shares_to_buy = self.purchase_size(price, size, symbol)
 
+        #update positions and balance
         self.balance -= shares_to_buy * price
         self.net_positions[symbol] += shares_to_buy
         print("Bought " + str(shares_to_buy) + " shares of " + symbol + " at " + str(price))
         print("Finished buy")
 
-    
+        #release lock when done
         self.portfolio_lock.release()
 
         
-
     #calculate how many shares to sell based on risk manager type
     def sell_size(self, price, size, symbol):
         if self.risk_manager == "cppi":
@@ -88,40 +87,42 @@ class PortfolioManager():
             risk_limit = 0
         risk_limit-=(-self.net_positions[symbol])
 
-        # print(size, risk_limit)
         return max(0, min(size, risk_limit))
     
     def sell(self, price, size, symbol, fixed=None):
+        #aquire lock to prevent two executed trades changing balance at same time
         self.portfolio_lock.acquire()
 
         #update price for pnl calculation
         self.prices[symbol] = price
 
         print("Starting sell")
+        #use risk management function to get sell size
         if not fixed:
             shares_to_sell = self.sell_size(price, size, symbol)
-            #shares_to_sell = min(size, self.net_positions[symbol])
         else:
             shares_to_sell = fixed
 
+        #update positions and balance
         self.balance += shares_to_sell * price
         self.net_positions[symbol] -= shares_to_sell
         print("Sold " + str(shares_to_sell) + " shares of " + symbol + " at " + str(price))
         print("Finished sell")
 
-        
-
+        #release lock when done
         self.portfolio_lock.release()
 
         
 
     def rebalance(self, price, size, symbol):
+        #aquire lock to prevent two executed trades changing balance at same time
         self.portfolio_lock.acquire()
 
         #update price for pnl calculation
         self.prices[symbol] = price
 
         print("Starting portfolio rebalance")
+        #get risk limit from risk manager
         risk_limit = None
         if self.risk_manager == "cppi":
             risk_limit = self.cppi_risk_manager()/price
@@ -130,8 +131,7 @@ class PortfolioManager():
         elif self.risk_manager == "ratio":
             risk_limit = self.ratio_risk_manager()/price
 
-        # print(risk_limit)
-        
+        #rebalance equities accordingly
         if risk_limit:
             if self.net_positions[symbol] > risk_limit:
                 print("Finished rebalance: selling shares now")
@@ -139,11 +139,13 @@ class PortfolioManager():
 
                 self.sell(price, 0, symbol, min(self.net_positions[symbol]-risk_limit, size))
                 return
-        print("Rebalancing: no shares sold")
-        print("Finished rebalance")
+        print("Finished rebalance: no shares sold")
+
+        #release lock when done
         self.portfolio_lock.release()
 
 
+    #calculate pnl and append to pnl over time list
     def get_pnl(self):
         asset_value = 0
         for key in self.net_positions:
@@ -155,22 +157,16 @@ class PortfolioManager():
         self.pnls_over_time.append(pnl)
         return pnl
     
+    #get pnl without saving to list
     def get_pnl_without_save(self):
         asset_value = 0
         for key in self.net_positions:
             cur_equity_value = self.net_positions[key] * self.prices[key]
             asset_value += cur_equity_value
         return (self.balance + asset_value) - self.initial_balance
-    
-    
-    def get_available_balance(self):
-        return self.balance
 
+    #plot pnl over time after exiting
     def plot(self):
-        
-        # with open("file.json", 'w') as f:
-        #     json.dump([self.pnls_over_time, self.net_position_values_over_time], f, indent=2) 
-
         finish_time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         plt.figure(figsize=(12,6))
         plt.plot(self.pnls_over_time, linewidth=2, label="PNL")

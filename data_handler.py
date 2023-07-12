@@ -44,7 +44,7 @@ class WSHandler(IDataHandler):
 
 
     def start(self):
-        # websocket.enableTrace(True)
+        # open websocket based on url and run forever
         self.ws = websocket.WebSocketApp( url = self.url,
                                           on_message=self.on_message,
                                           on_error=self.on_error,
@@ -60,14 +60,16 @@ class HistHandler(IDataHandler):
         self.symbol_handler = symbol_handler
         self.file_name = 'historical_data/' + symbol + "_data.csv"
         self.data = pd.read_csv(self.file_name)
-        print(self.data.size)
+        print("Number of messages in CSV file:", self.data.size)
     
     def on_message(self, message):
         self.symbol_handler.parse_message(message, "historic")
+        pass
 
     def start(self):
+        #simulate live data by parsing each row/message at a time
         for index, row in self.data.iterrows():
-            self.symbol_handler.parse_message(row, "historic")
+            self.on_message(row)
             
             
 
