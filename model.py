@@ -9,14 +9,16 @@ from datetime import datetime
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 
-data = pd.read_csv('data.csv')
+#update csv name to test ml model
+file_name = 'historical_data/BTC-USD_data.csv'
+data = pd.read_csv(file_name)
 print("TensorFlow version:", tf.__version__)
 
 train_percent = 0.95
 window = 9
 
 # get close values and split into training and
-close_data = data.filter(['Close'])
+close_data = data.filter(['last'])
 dataset = close_data.values
 
 # scale data between 0 and 1
@@ -89,10 +91,10 @@ test = data[training:]
 test['Predictions'] = predictions
 
 plt.figure(figsize=(10, 8))
-plt.plot(train['Date'], train['Close'])
-plt.plot(test['Date'], test[['Close', 'Predictions']])
+plt.plot(train['ts'], train['last'])
+plt.plot(test['ts'], test[['last', 'Predictions']])
 plt.title('Bitcoin Price')
-plt.xlabel('Date')
-plt.ylabel("Close")
+plt.xlabel('Timestamp')
+plt.ylabel("Last Price")
 plt.legend(['Train', 'Test', 'Predictions'])
 plt.show()

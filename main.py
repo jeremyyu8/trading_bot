@@ -102,6 +102,8 @@ def initialize_bot(args):
             executor.submit(okx_data_manager.start)
         listener = keyboard.Listener(on_press=on_press)
         executor.submit(listener.start)
+
+    portfolio_manager.plot()
     
     
 #check paramters and print configuration
