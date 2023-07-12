@@ -88,6 +88,7 @@ class BinanceSymbolHandler(BaseSymbolHandler):
         
     
     def parse_message(self, message, type):
+        receive_time = time.time()
         if type == "live":
             data = message
             self.orderbook.on_trade({"last": float(data["c"]), 
@@ -97,7 +98,8 @@ class BinanceSymbolHandler(BaseSymbolHandler):
                                  "askSz": float(data["A"]), 
                                  "bidPx": float(data["b"]), 
                                  "bidSz": float(data["B"]),
-                                 "symbol": self.symbol}) 
+                                 "symbol": self.symbol,
+                                 "receiveTime": receive_time}) 
             
         elif type == "historic":
             data = message
@@ -168,6 +170,7 @@ class CoinbaseSymbolHandler(BaseSymbolHandler):
         
     
     def parse_message(self, message, type):
+        receive_time = time.time()
         if type == "live":
             data = message
             #print(data)
@@ -179,7 +182,8 @@ class CoinbaseSymbolHandler(BaseSymbolHandler):
                                  "askSz": float(data["best_ask_size"]), 
                                  "bidPx": float(data["best_bid"]), 
                                  "bidSz": float(data["best_bid_size"]),
-                                 "symbol": self.symbol}) 
+                                 "symbol": self.symbol,
+                                 "receiveTime": receive_time}) 
             
         elif type == "historic":
             data = message
@@ -250,6 +254,7 @@ class OKXSymbolHandler(BaseSymbolHandler):
 
 
     def parse_message(self, message: dict[str, list[dict]], type: str):
+        receive_time = time.time()
         if type == "live":
             data = message["data"][0]
             self.orderbook.on_trade({"last": float(data["last"]), 
@@ -259,7 +264,8 @@ class OKXSymbolHandler(BaseSymbolHandler):
                                  "askSz": float(data["askSz"]), 
                                  "bidPx": float(data["bidPx"]), 
                                  "bidSz": float(data["bidSz"]),
-                                 "symbol": self.symbol}) 
+                                 "symbol": self.symbol,
+                                 "receiveTime": receive_time}) 
             
         elif type == "historic":
             data = message

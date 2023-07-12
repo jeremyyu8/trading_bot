@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 class IStrategy():
     '''
     Interface for an automated trading strategy.
@@ -31,6 +32,9 @@ class BaseStrategy(IStrategy):
 
     def remove_book_listener(self, symbol):
         self.market_data_manager.get_orderbook(symbol=symbol).remove_book_listener(strategy=self) 
+
+    def print_receive_to_trade_execute_time(self, message):
+        print("Latency:", str((time.time()-message["receiveTime"])*1000) + "ms")
     
 
 class SimpleMovingAvgStrategy(BaseStrategy):
@@ -62,6 +66,7 @@ class SimpleMovingAvgStrategy(BaseStrategy):
         else:
             self.portfolio_manager.rebalance(message["askPx"], message["askSz"], message["symbol"])
         print("PNL:", self.portfolio_manager.get_pnl())
+        self.print_receive_to_trade_execute_time(message)
         
     
 
@@ -116,7 +121,8 @@ class RSIStrategy(BaseStrategy):
             self.portfolio_manager.buy(message["askPx"], message["askSz"], message["symbol"])
         else:
             self.portfolio_manager.rebalance(message["askPx"], message["askSz"], message["symbol"])
-        print("PNL:", self.portfolio_manager.get_pnl())
+        print("PNL:", "$"+str(self.portfolio_manager.get_pnl()))
+        self.print_receive_to_trade_execute_time(message)
 
 class MACDStrategy(BaseStrategy):
     def __init__(self, market_data_manager, portfolio_manager, short_window = 12, long_window = 26, signal_span = 9, hurst_thresh = 0.6, hurst_len = 100) -> None:
@@ -164,6 +170,7 @@ class MACDStrategy(BaseStrategy):
         
         
         print("PNL:", self.portfolio_manager.get_pnl())
+        self.print_receive_to_trade_execute_time(message)
 
     def get_hurst_exponent(self, time_series, max_lag=20):
         lags = range(2, max_lag)
